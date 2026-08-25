@@ -57,3 +57,140 @@
     padding-inline: 2rem;
   }
 }
+
+@keyframes cart-item-exit {
+  0% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  65% {
+    grid-template-rows: 1fr;
+    padding-block: 1rem;
+    opacity: 0;
+    transform: translateX(3rem) scale(0.97);
+  }
+
+  100% {
+    grid-template-rows: 0fr;
+    margin-block-start: 0;
+    padding-block: 0;
+    opacity: 0;
+    transform: translateX(3rem) scale(0.97);
+  }
+}
+
+@keyframes cart-item-exit-reduced {
+  to {
+    opacity: 0;
+  }
+}
+
+.cart-item-removing {
+  grid-template-rows: 1fr;
+  pointer-events: none;
+  animation: cart-item-exit 220ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-item-removing {
+    animation: cart-item-exit-reduced 1ms linear forwards;
+  }
+}
+
+@keyframes cart-drawer-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cart-drawer-overlay-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cart-drawer-panel-in {
+  from {
+    opacity: 0.75;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cart-drawer-panel-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0.75;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes cart-drawer-panel-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cart-drawer-panel-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.cart-drawer[data-state="open"]::backdrop {
+  animation: cart-drawer-overlay-in 260ms ease-out forwards;
+}
+
+.cart-drawer[data-state="closing"]::backdrop {
+  animation: cart-drawer-overlay-out 240ms ease-in forwards;
+}
+
+.cart-drawer[data-state="open"] .cart-drawer-panel {
+  animation: cart-drawer-panel-in 260ms ease-out forwards;
+}
+
+.cart-drawer[data-state="closing"] .cart-drawer-panel {
+  pointer-events: none;
+  animation: cart-drawer-panel-out 240ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-drawer[data-state="open"]::backdrop,
+  .cart-drawer[data-state="closing"]::backdrop {
+    animation-duration: 1ms;
+  }
+
+  .cart-drawer[data-state="open"] .cart-drawer-panel {
+    animation: cart-drawer-panel-fade-in 1ms linear forwards;
+  }
+
+  .cart-drawer[data-state="closing"] .cart-drawer-panel {
+    animation: cart-drawer-panel-fade-out 1ms linear forwards;
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { CartItem } from "@/components/cart/cart-item";
 import { useCart } from "@/contexts/cart-context";
@@ -8,6 +8,7 @@ import { formatCurrency } from "@/utils/format-currency";
 
 export function CartDrawer() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const previousBodyOverflowRef = useRef<string | null>(null);
   const {
     items,
     totalQuantity,
@@ -16,6 +17,15 @@ export function CartDrawer() {
     clearCart,
     closeCart,
   } = useCart();
+
+  const restorePageScroll = useCallback(() => {
+    if (previousBodyOverflowRef.current === null) {
+      return;
+    }
+
+    document.body.style.overflow = previousBodyOverflowRef.current;
+    previousBodyOverflowRef.current = null;
+  }, []);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -26,7 +36,7 @@ export function CartDrawer() {
 
     if (!isCartOpen) {
       if (dialog.open) {
-        dialog.close();
+        dialog.dataset.state = "closing";
       }
       return;
     }
@@ -35,13 +45,32 @@ export function CartDrawer() {
       dialog.showModal();
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    dialog.dataset.state = "open";
 
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    if (previousBodyOverflowRef.current === null) {
+      previousBodyOverflowRef.current = document.body.style.overflow;
+    }
+
+    document.body.style.overflow = "hidden";
   }, [isCartOpen]);
+
+  useEffect(() => {
+    return () => {
+      restorePageScroll();
+    };
+  }, [restorePageScroll]);
+
+  function finishClosing() {
+    const dialog = dialogRef.current;
+
+    if (!dialog || dialog.dataset.state !== "closing") {
+      return;
+    }
+
+    dialog.close();
+    dialog.dataset.state = "closed";
+    restorePageScroll();
+  }
 
   function handleClearCart() {
     const shouldClearCart = window.confirm(
@@ -57,20 +86,34 @@ export function CartDrawer() {
     <dialog
       ref={dialogRef}
       id="cart-drawer"
-      className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-chocolate backdrop:bg-chocolate/40 backdrop:backdrop-blur-[2px]"
+      className="cart-drawer fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-chocolate backdrop:bg-chocolate/40 backdrop:backdrop-blur-[2px]"
       aria-labelledby="cart-drawer-title"
       onCancel={(event) => {
         event.preventDefault();
         closeCart();
       }}
-      onClose={closeCart}
+      onClose={() => {
+        if (dialogRef.current) {
+          dialogRef.current.dataset.state = "closed";
+        }
+
+        restorePageScroll();
+        closeCart();
+      }}
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           closeCart();
         }
       }}
     >
-      <section className="ml-auto flex h-full w-full max-w-[30rem] flex-col bg-white shadow-2xl">
+      <section
+        className="cart-drawer-panel ml-auto flex h-full w-full max-w-[30rem] flex-col bg-white shadow-2xl"
+        onAnimationEnd={(event) => {
+          if (event.currentTarget === event.target) {
+            finishClosing();
+          }
+        }}
+      >
         <header className="flex items-start justify-between gap-4 border-b border-chocolate/10 px-5 py-5 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-chocolate/55">
