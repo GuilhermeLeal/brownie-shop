@@ -1,9 +1,15 @@
+"use client";
+
 import Image from "next/image";
+
+import { useOrderMode } from "@/contexts/order-mode-context";
 
 // Imagem temporária: substitua este caminho pela fotografia final do Hero.
 const heroImage = "/images/demo/demo-hero-brownies.png";
 
 export function Hero() {
+  const { isOrderMode, startOrderMode } = useOrderMode();
+
   return (
     <section
       id="inicio"
@@ -33,12 +39,13 @@ export function Hero() {
             >
               Ver cardápio
             </a>
-            <a
-              href="#pedido"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-chocolate/20 bg-white px-6 py-3 font-bold text-chocolate transition-colors hover:border-secondary hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            <button
+              type="button"
+              onClick={startOrderMode}
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-chocolate/20 bg-white px-6 py-3 font-bold text-chocolate transition-colors hover:border-secondary hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              Fazer pedido
-            </a>
+              {isOrderMode ? "Continuar pedido" : "Fazer pedido"}
+            </button>
           </div>
         </div>
 

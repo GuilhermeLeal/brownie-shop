@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Figtree, Gabarito } from "next/font/google";
+
+import { CartProvider } from "@/contexts/cart-context";
+import { OrderModeProvider } from "@/contexts/order-mode-context";
+
 import "./globals.css";
 
 const figtree = Figtree({
@@ -24,7 +28,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className={`${figtree.variable} ${gabarito.variable}`}>
-      <body>{children}</body>
+      <body>
+        <OrderModeProvider>
+          <CartProvider>{children}</CartProvider>
+        </OrderModeProvider>
+      </body>
     </html>
   );
 }

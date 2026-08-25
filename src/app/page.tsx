@@ -1,5 +1,6 @@
 import { AboutOwner } from "@/components/home/about-owner";
 import { BestSellers } from "@/components/home/best-sellers";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/home/footer";
 import { Header } from "@/components/home/header";
 import { Hero } from "@/components/home/hero";
@@ -10,6 +11,7 @@ export default function Home() {
   return (
     <>
       <Header />
+      <CartDrawer />
       <main id="conteudo-principal">
         <Hero />
         <BestSellers />
