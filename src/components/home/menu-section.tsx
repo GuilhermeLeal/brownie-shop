@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ProductMenuItem } from "@/components/home/product-menu-item";
+import { ExitOrderModal } from "@/components/order/exit-order-modal";
 import { useCart } from "@/contexts/cart-context";
+import { useCheckout } from "@/contexts/checkout-context";
 import { useOrderMode } from "@/contexts/order-mode-context";
 import { products } from "@/data/products";
 
@@ -15,6 +17,10 @@ type ActiveFlavorSelection = {
 export function MenuSection() {
   const { isOrderMode, stopOrderMode } = useOrderMode();
   const { items, totalQuantity, clearCart, closeCart } = useCart();
+  const { resetCheckout } = useCheckout();
+  const exitOrderButtonRef = useRef<HTMLButtonElement>(null);
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [exitItemCount, setExitItemCount] = useState(0);
   const [activeFlavorSelection, setActiveFlavorSelection] =
     useState<ActiveFlavorSelection | null>(null);
 
@@ -43,24 +49,22 @@ export function MenuSection() {
   function handleExitOrderMode() {
     if (items.length === 0) {
       setActiveFlavorSelection(null);
+      resetCheckout();
       stopOrderMode();
       return;
     }
 
-    const shouldAbandonOrder = window.confirm(
-      `Seu pedido possui ${totalQuantity} ${
-        totalQuantity === 1 ? "item" : "itens"
-      }. Sair do modo pedido removerá tudo. Deseja continuar?`,
-    );
+    setExitItemCount(totalQuantity);
+    setIsExitModalOpen(true);
+  }
 
-    if (!shouldAbandonOrder) {
-      return;
-    }
-
+  function handleConfirmExitOrderMode() {
     clearCart();
     closeCart();
+    resetCheckout();
     setActiveFlavorSelection(null);
     stopOrderMode();
+    setIsExitModalOpen(false);
   }
 
   return (
@@ -103,6 +107,7 @@ export function MenuSection() {
               </div>
             </div>
             <button
+              ref={exitOrderButtonRef}
               type="button"
               onClick={handleExitOrderMode}
               className="min-h-11 cursor-pointer self-start rounded-full px-4 py-2 text-sm font-bold underline decoration-chocolate/30 underline-offset-4 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate sm:self-auto"
@@ -111,6 +116,14 @@ export function MenuSection() {
             </button>
           </div>
         )}
+
+        <ExitOrderModal
+          isOpen={isExitModalOpen}
+          itemCount={exitItemCount}
+          triggerRef={exitOrderButtonRef}
+          onCancel={() => setIsExitModalOpen(false)}
+          onConfirm={handleConfirmExitOrderMode}
+        />
 
         <ol
           className={`space-y-8 sm:space-y-10 lg:space-y-12 ${

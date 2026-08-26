@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Figtree, Gabarito } from "next/font/google";
 
 import { CartProvider } from "@/contexts/cart-context";
+import { CheckoutProvider } from "@/contexts/checkout-context";
 import { OrderModeProvider } from "@/contexts/order-mode-context";
 
 import "./globals.css";
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="pt-BR" className={`${figtree.variable} ${gabarito.variable}`}>
       <body>
         <OrderModeProvider>
-          <CartProvider>{children}</CartProvider>
+          <CartProvider>
+            <CheckoutProvider>{children}</CheckoutProvider>
+          </CartProvider>
         </OrderModeProvider>
       </body>
     </html>

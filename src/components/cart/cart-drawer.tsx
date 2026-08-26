@@ -2,21 +2,33 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import { CartItem } from "@/components/cart/cart-item";
+import { CartView } from "@/components/cart/cart-view";
+import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { OrderReview } from "@/components/checkout/order-review";
 import { useCart } from "@/contexts/cart-context";
-import { formatCurrency } from "@/utils/format-currency";
+import { useCheckout } from "@/contexts/checkout-context";
+import type { CheckoutStep } from "@/types/checkout";
+
+const stepTitles: Record<CheckoutStep, string> = {
+  cart: "Seu pedido",
+  details: "Dados do pedido",
+  review: "Revise seu pedido",
+};
+
+const stepNumbers: Record<CheckoutStep, number> = {
+  cart: 1,
+  details: 2,
+  review: 3,
+};
 
 export function CartDrawer() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const previousStepRef = useRef<CheckoutStep>("cart");
   const previousBodyOverflowRef = useRef<string | null>(null);
-  const {
-    items,
-    totalQuantity,
-    totalInCents,
-    isCartOpen,
-    clearCart,
-    closeCart,
-  } = useCart();
+  const { items, isCartOpen, closeCart } = useCart();
+  const { step, setStep } = useCheckout();
+  const activeStep: CheckoutStep = items.length === 0 ? "cart" : step;
 
   const restorePageScroll = useCallback(() => {
     if (previousBodyOverflowRef.current === null) {
@@ -60,6 +72,14 @@ export function CartDrawer() {
     };
   }, [restorePageScroll]);
 
+  useEffect(() => {
+    if (isCartOpen && previousStepRef.current !== activeStep) {
+      titleRef.current?.focus();
+    }
+
+    previousStepRef.current = activeStep;
+  }, [activeStep, isCartOpen]);
+
   function finishClosing() {
     const dialog = dialogRef.current;
 
@@ -70,16 +90,6 @@ export function CartDrawer() {
     dialog.close();
     dialog.dataset.state = "closed";
     restorePageScroll();
-  }
-
-  function handleClearCart() {
-    const shouldClearCart = window.confirm(
-      "Remover todos os itens do pedido?",
-    );
-
-    if (shouldClearCart) {
-      clearCart();
-    }
   }
 
   return (
@@ -117,13 +127,15 @@ export function CartDrawer() {
         <header className="flex items-start justify-between gap-4 border-b border-chocolate/10 px-5 py-5 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-chocolate/55">
-              Modo pedido
+              Modo pedido · Etapa {stepNumbers[activeStep]} de 3
             </p>
             <h2
+              ref={titleRef}
               id="cart-drawer-title"
-              className="mt-1 font-heading text-3xl font-bold"
+              tabIndex={-1}
+              className="mt-1 font-heading text-3xl font-bold outline-none"
             >
-              Seu pedido
+              {stepTitles[activeStep]}
             </h2>
           </div>
           <button
@@ -147,68 +159,18 @@ export function CartDrawer() {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-          {items.length === 0 ? (
-            <div className="flex min-h-72 flex-col items-center justify-center rounded-[2rem] bg-background px-6 text-center">
-              <span
-                className="size-3 rounded-full bg-primary"
-                aria-hidden="true"
-              />
-              <p className="mt-4 font-heading text-2xl font-bold">
-                Seu pedido ainda está vazio.
-              </p>
-              <p className="mt-2 max-w-xs text-sm leading-6 text-chocolate/65">
-                Feche este painel e escolha seus produtos no cardápio.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <p className="text-sm font-semibold text-chocolate/65">
-                  {totalQuantity} {totalQuantity === 1 ? "item" : "itens"}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleClearCart}
-                  className="min-h-11 cursor-pointer rounded-full px-3 py-2 text-sm font-semibold underline decoration-chocolate/30 underline-offset-4 transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate"
-                >
-                  Limpar pedido
-                </button>
-              </div>
-              <ul className="space-y-3">
-                {items.map((item) => (
-                  <CartItem key={item.id} item={item} />
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-
-        <footer className="border-t border-chocolate/10 bg-white px-5 py-5 sm:px-6">
-          <dl className="space-y-2">
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <dt>Itens</dt>
-              <dd className="font-bold">{totalQuantity}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="font-semibold">Total dos produtos</dt>
-              <dd className="font-heading text-xl font-bold">
-                {formatCurrency(totalInCents)}
-              </dd>
-            </div>
-          </dl>
-          <p id="delivery-fee-note" className="mt-3 text-xs text-chocolate/55">
-            A taxa de entrega não está incluída.
-          </p>
-          <button
-            type="button"
-            disabled={items.length === 0}
-            aria-describedby="delivery-fee-note"
-            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-chocolate px-6 py-3 font-bold text-white transition-colors enabled:cursor-pointer enabled:hover:bg-primary enabled:hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Continuar pedido
-          </button>
-        </footer>
+        {activeStep === "cart" && (
+          <CartView onContinue={() => setStep("details")} />
+        )}
+        {activeStep === "details" && (
+          <CheckoutForm
+            onBack={() => setStep("cart")}
+            onReview={() => setStep("review")}
+          />
+        )}
+        {activeStep === "review" && (
+          <OrderReview onBack={() => setStep("details")} />
+        )}
       </section>
     </dialog>
   );
