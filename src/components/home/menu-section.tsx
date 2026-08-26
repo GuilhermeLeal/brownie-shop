@@ -85,8 +85,7 @@ export function MenuSection() {
             Escolha o seu favorito
           </h2>
           <p className="mt-4 text-pretty leading-7 text-chocolate/70">
-            Descrições e preços provisórios para apresentar todas as opções da
-            versão normal do cardápio.
+            Conheça as opções disponíveis na versão normal do nosso cardápio.
           </p>
         </div>
 

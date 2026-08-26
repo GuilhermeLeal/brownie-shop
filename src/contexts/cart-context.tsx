@@ -11,6 +11,7 @@ import {
 
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
+import { createCartItem } from "@/utils/cart-item";
 
 type CartContextValue = {
   items: CartItem[];
@@ -28,47 +29,29 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function createCartItemId(productId: string, flavor?: string) {
-  return flavor ? `${productId}::${flavor}` : productId;
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addProduct = useCallback((product: Product, flavor?: string) => {
-    const selectedFlavor = flavor?.trim() || undefined;
+    const newItem = createCartItem(product, flavor);
 
-    if (product.flavors?.length) {
-      if (!selectedFlavor || !product.flavors.includes(selectedFlavor)) {
-        return false;
-      }
-    } else if (selectedFlavor) {
+    if (!newItem) {
       return false;
     }
 
-    const itemId = createCartItemId(product.id, selectedFlavor);
-
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === itemId);
+      const existingItem = currentItems.find((item) => item.id === newItem.id);
 
       if (existingItem) {
         return currentItems.map((item) =>
-          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === newItem.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
         );
       }
 
-      return [
-        ...currentItems,
-        {
-          id: itemId,
-          productId: product.id,
-          name: product.name,
-          unitPriceInCents: product.priceInCents,
-          quantity: 1,
-          flavor: selectedFlavor,
-        },
-      ];
+      return [...currentItems, newItem];
     });
 
     return true;

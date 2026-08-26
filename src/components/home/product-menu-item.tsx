@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/contexts/cart-context";
 import type { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/format-currency";
+import {
+  getFlavorPriceInCents,
+  getProductPricePresentation,
+} from "@/utils/product-price";
 
 type ProductMenuItemProps = {
   product: Product;
@@ -37,6 +41,15 @@ export function ProductMenuItem({
   const desktopColumns = imageOnRight
     ? "md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"
     : "md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]";
+  const pricePresentation = getProductPricePresentation(product);
+  const productPriceLabel =
+    pricePresentation.kind === "consult"
+      ? "Consultar valor"
+      : `${
+          pricePresentation.kind === "starting-at" ? "A partir de " : ""
+        }${formatCurrency(pricePresentation.priceInCents)}`;
+  const hasSelectableFlavors =
+    isOrderMode && product.priceType !== "consult";
 
   useEffect(() => {
     return () => {
@@ -53,6 +66,10 @@ export function ProductMenuItem({
 
   function handleAddProduct() {
     onProductInteraction(product.id);
+
+    if (product.priceType === "consult") {
+      return;
+    }
 
     if (product.flavors?.length && !selectedFlavor) {
       setShowFlavorError(true);
@@ -81,6 +98,14 @@ export function ProductMenuItem({
     feedbackTimerRef.current = setTimeout(() => {
       setWasAdded(false);
     }, 1600);
+  }
+
+  function getFlavorLabel(flavorName: string) {
+    const flavorPriceInCents = getFlavorPriceInCents(product, flavorName);
+
+    return flavorPriceInCents === null
+      ? flavorName
+      : `${flavorName} — ${formatCurrency(flavorPriceInCents)}`;
   }
 
   return (
@@ -119,31 +144,31 @@ export function ProductMenuItem({
           {product.description}
         </p>
         <p className="mt-5 text-lg font-bold">
-          {formatCurrency(product.priceInCents)}
+          {productPriceLabel}
         </p>
 
         {product.flavors && (
           <div className="mt-7 border-l-4 border-chocolate/20 pl-4">
-            {isOrderMode ? (
+            {hasSelectableFlavors ? (
               <fieldset aria-describedby={showFlavorError ? flavorErrorId : undefined}>
                 <legend className="text-sm font-bold">Sabores</legend>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {product.flavors.map((flavor) => {
-                    const isSelected = selectedFlavor === flavor;
+                    const isSelected = selectedFlavor === flavor.name;
 
                     return (
                       <button
-                        key={flavor}
+                        key={flavor.name}
                         type="button"
                         aria-pressed={isSelected}
-                        onClick={() => handleFlavorClick(flavor)}
+                        onClick={() => handleFlavorClick(flavor.name)}
                         className={`cursor-pointer rounded-full border px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 ${
                           isSelected
                             ? "border-chocolate bg-chocolate font-semibold text-white"
                             : "border-chocolate/20 bg-white/85 text-chocolate/75 hover:bg-white"
                         }`}
                       >
-                        {flavor}
+                        {getFlavorLabel(flavor.name)}
                       </button>
                     );
                   })}
@@ -158,17 +183,17 @@ export function ProductMenuItem({
                 >
                   {product.flavors.map((flavor) => (
                     <li
-                      key={flavor}
+                      key={flavor.name}
                       className="rounded-full bg-white/60 px-3 py-2 text-sm text-chocolate/75"
                     >
-                      {flavor}
+                      {getFlavorLabel(flavor.name)}
                     </li>
                   ))}
                 </ul>
               </>
             )}
 
-            {isOrderMode && showFlavorError && (
+            {hasSelectableFlavors && showFlavorError && (
               <p
                 id={flavorErrorId}
                 role="alert"
@@ -180,21 +205,26 @@ export function ProductMenuItem({
           </div>
         )}
 
-        {isOrderMode && (
-          <button
-            type="button"
-            onClick={handleAddProduct}
-            className={`mt-7 inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full px-6 py-3 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto ${
-              wasAdded
-                ? "bg-white text-chocolate ring-1 ring-chocolate/15"
-                : "bg-chocolate text-white hover:bg-white hover:text-chocolate"
-            }`}
-          >
-            <span aria-live="polite">
-              {wasAdded ? "Adicionado ✓" : "Adicionar ao pedido"}
-            </span>
-          </button>
-        )}
+        {isOrderMode &&
+          (product.priceType === "consult" ? (
+            <p className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white/65 px-6 py-3 font-bold text-chocolate/75 ring-1 ring-chocolate/10 sm:w-auto">
+              Valor sob consulta
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddProduct}
+              className={`mt-7 inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full px-6 py-3 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto ${
+                wasAdded
+                  ? "bg-white text-chocolate ring-1 ring-chocolate/15"
+                  : "bg-chocolate text-white hover:bg-white hover:text-chocolate"
+              }`}
+            >
+              <span aria-live="polite">
+                {wasAdded ? "Adicionado ✓" : "Adicionar ao pedido"}
+              </span>
+            </button>
+          ))}
       </div>
     </article>
   );
