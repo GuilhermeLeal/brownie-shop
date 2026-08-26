@@ -13,5 +13,12 @@
   },
   "cache": {
     "enabled": true
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "brownie-shop-db",
+      "database_id": "f5916bbd-b7d3-492d-b8a5-38ba8de66d43"
+    }
+  ]
 }
