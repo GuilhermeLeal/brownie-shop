@@ -11,14 +11,15 @@ import {
 
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
-import { createCartItem } from "@/utils/cart-item";
+import { addOrIncrementCartItem, createCartItem } from "@/utils/cart-item";
+import type { ProductSelection } from "@/utils/product-price";
 
 type CartContextValue = {
   items: CartItem[];
   totalQuantity: number;
   totalInCents: number;
   isCartOpen: boolean;
-  addProduct: (product: Product, flavor?: string) => boolean;
+  addProduct: (product: Product, selection?: ProductSelection) => boolean;
   removeItem: (itemId: string) => void;
   increaseQuantity: (itemId: string) => void;
   decreaseQuantity: (itemId: string) => void;
@@ -33,29 +34,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addProduct = useCallback((product: Product, flavor?: string) => {
-    const newItem = createCartItem(product, flavor);
+  const addProduct = useCallback(
+    (product: Product, selection?: ProductSelection) => {
+      const newItem = createCartItem(product, selection);
 
-    if (!newItem) {
-      return false;
-    }
-
-    setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === newItem.id);
-
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === newItem.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
+      if (!newItem) {
+        return false;
       }
 
-      return [...currentItems, newItem];
-    });
+      setItems((currentItems) =>
+        addOrIncrementCartItem(currentItems, newItem),
+      );
 
-    return true;
-  }, []);
+      return true;
+    },
+    [],
+  );
 
   const removeItem = useCallback((itemId: string) => {
     setItems((currentItems) =>

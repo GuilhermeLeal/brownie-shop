@@ -3,6 +3,7 @@
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
 import { useLocalToday } from "@/hooks/use-local-today";
+import { getCartItemVariantLabel } from "@/utils/cart-item";
 import { formatCurrency } from "@/utils/format-currency";
 import { formatDateInputValue } from "@/utils/date";
 import { formatPhone } from "@/utils/phone";
@@ -104,26 +105,30 @@ export function OrderReview({ onBack }: OrderReviewProps) {
             </p>
           </div>
           <ul className="mt-4 divide-y divide-chocolate/10">
-            {items.map((item) => (
-              <li key={item.id} className="py-4 first:pt-0 last:pb-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-bold">{item.name}</p>
-                    {item.flavor && (
+            {items.map((item) => {
+              const variantLabel = getCartItemVariantLabel(item);
+
+              return (
+                <li key={item.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-bold">{item.name}</p>
+                      {variantLabel && (
+                        <p className="mt-1 text-sm text-chocolate/60">
+                          {variantLabel}
+                        </p>
+                      )}
                       <p className="mt-1 text-sm text-chocolate/60">
-                        Sabor: {item.flavor}
+                        {item.quantity} × {formatCurrency(item.unitPriceInCents)}
                       </p>
-                    )}
-                    <p className="mt-1 text-sm text-chocolate/60">
-                      {item.quantity} × {formatCurrency(item.unitPriceInCents)}
+                    </div>
+                    <p className="shrink-0 text-sm font-bold">
+                      {formatCurrency(item.unitPriceInCents * item.quantity)}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-bold">
-                    {formatCurrency(item.unitPriceInCents * item.quantity)}
-                  </p>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </section>
 

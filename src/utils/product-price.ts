@@ -7,7 +7,16 @@ export type ProductPricePresentation =
 
 export type ResolvedProductSelection = {
   flavor?: string;
+  size?: {
+    value: string;
+    label: string;
+  };
   unitPriceInCents: number;
+};
+
+export type ProductSelection = {
+  flavor?: string;
+  size?: string;
 };
 
 function normalizeFlavor(flavor?: string) {
@@ -25,17 +34,19 @@ export function getProductPricePresentation(
     return { kind: "fixed", priceInCents: product.priceInCents };
   }
 
-  const lowestFlavorPrice = product.flavors.reduce<number | null>(
-    (lowestPrice, flavor) =>
+  const prices =
+    product.priceType === "by-flavor" ? product.flavors : product.sizes;
+  const lowestOptionPrice = prices.reduce<number | null>(
+    (lowestPrice, option) =>
       lowestPrice === null
-        ? flavor.priceInCents
-        : Math.min(lowestPrice, flavor.priceInCents),
+        ? option.priceInCents
+        : Math.min(lowestPrice, option.priceInCents),
     null,
   );
 
-  return lowestFlavorPrice === null
+  return lowestOptionPrice === null
     ? { kind: "consult" }
-    : { kind: "starting-at", priceInCents: lowestFlavorPrice };
+    : { kind: "starting-at", priceInCents: lowestOptionPrice };
 }
 
 export function getFlavorPriceInCents(
@@ -53,6 +64,10 @@ export function getFlavorPriceInCents(
     );
   }
 
+  if (product.priceType === "by-size") {
+    return null;
+  }
+
   return product.flavors?.some(({ name }) => name === flavorName)
     ? product.priceInCents
     : null;
@@ -60,15 +75,20 @@ export function getFlavorPriceInCents(
 
 export function resolveProductSelection(
   product: Product,
-  selectedFlavor?: string,
+  selection: ProductSelection = {},
 ): ResolvedProductSelection | null {
   if (product.priceType === "consult") {
     return null;
   }
 
-  const normalizedFlavor = normalizeFlavor(selectedFlavor);
+  const normalizedFlavor = normalizeFlavor(selection.flavor);
+  const normalizedSize = selection.size?.trim() || undefined;
 
   if (product.priceType === "by-flavor") {
+    if (normalizedSize) {
+      return null;
+    }
+
     const flavor = product.flavors.find(
       ({ name }) => name === normalizedFlavor,
     );
@@ -78,17 +98,33 @@ export function resolveProductSelection(
       : null;
   }
 
-  if (product.flavors?.length) {
-    const flavor = product.flavors.find(
-      ({ name }) => name === normalizedFlavor,
-    );
+  const flavor = product.flavors?.find(
+    ({ name }) => name === normalizedFlavor,
+  );
 
-    return flavor
-      ? { flavor: flavor.name, unitPriceInCents: product.priceInCents }
+  if (product.flavors?.length ? !flavor : normalizedFlavor) {
+    return null;
+  }
+
+  if (product.priceType === "by-size") {
+    const size = product.sizes.find(({ value }) => value === normalizedSize);
+
+    return size
+      ? {
+          flavor: flavor?.name,
+          size: { value: size.value, label: size.label },
+          unitPriceInCents: size.priceInCents,
+        }
       : null;
   }
 
-  return normalizedFlavor
+  if (normalizedSize) {
+    return null;
+  }
+
+  return product.flavors?.length
+    ? { flavor: flavor?.name, unitPriceInCents: product.priceInCents }
+    : normalizedFlavor
     ? null
     : { unitPriceInCents: product.priceInCents };
 }

@@ -5,4 +5,8 @@ export type CartItem = {
   unitPriceInCents: number;
   quantity: number;
   flavor?: string;
+  size?: {
+    value: string;
+    label: string;
+  };
 };

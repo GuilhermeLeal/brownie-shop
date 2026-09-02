@@ -20,9 +20,11 @@ const vite = await createServer({
 
 try {
   const { products } = await vite.ssrLoadModule("/src/data/products.ts");
-  const { createCartItem } = await vite.ssrLoadModule(
-    "/src/utils/cart-item.ts",
-  );
+  const {
+    addOrIncrementCartItem,
+    createCartItem,
+    getCartItemVariantLabel,
+  } = await vite.ssrLoadModule("/src/utils/cart-item.ts");
   const { getProductPricePresentation } = await vite.ssrLoadModule(
     "/src/utils/product-price.ts",
   );
@@ -34,7 +36,13 @@ try {
     return product;
   };
 
-  assert.equal(products.length, 10);
+  assert.equal(products.length, 11);
+  assert.equal(
+    products.some((product) =>
+      product.description.toLowerCase().includes("lorem ipsum"),
+    ),
+    false,
+  );
 
   const fixedPriceExpectations = [
     ["brownie-tradicional", "Brownie tradicional", 600],
@@ -68,10 +76,12 @@ try {
   assert.equal(traditional.unitPriceInCents, 600);
 
   const potBrownie = getProduct("brownie-de-pote");
-  const brigadeiro = createCartItem(potBrownie, "Brigadeiro");
+  const brigadeiro = createCartItem(potBrownie, {
+    flavor: "Brigadeiro",
+  });
   const ninhoWithNutella = createCartItem(
     potBrownie,
-    "Ninho com Nutella",
+    { flavor: "Ninho com Nutella" },
   );
 
   assert.ok(brigadeiro);
@@ -93,15 +103,111 @@ try {
 
   const brownieCake = getProduct("bolo-de-brownie");
   assert.deepEqual(getProductPricePresentation(brownieCake), {
-    kind: "consult",
+    kind: "starting-at",
+    priceInCents: 10000,
   });
   assert.equal(createCartItem(brownieCake), null);
-  assert.equal(createCartItem(brownieCake, "Brigadeiro"), null);
+  assert.equal(
+    createCartItem(brownieCake, { flavor: "Brigadeiro" }),
+    null,
+  );
+  assert.equal(createCartItem(brownieCake, { size: "1kg" }), null);
+
+  const cakeBrigadeiro1kg = createCartItem(brownieCake, {
+    flavor: "Brigadeiro",
+    size: "1kg",
+  });
+  const cakeBrigadeiro2kg = createCartItem(brownieCake, {
+    flavor: "Brigadeiro",
+    size: "2kg",
+  });
+  const cakeNinhoNutella3kg = createCartItem(brownieCake, {
+    flavor: "Ninho com Nutella",
+    size: "3kg",
+  });
+
+  assert.ok(cakeBrigadeiro1kg);
+  assert.ok(cakeBrigadeiro2kg);
+  assert.ok(cakeNinhoNutella3kg);
+  assert.equal(cakeBrigadeiro1kg.unitPriceInCents, 10000);
+  assert.equal(cakeBrigadeiro2kg.unitPriceInCents, 15000);
+  assert.equal(cakeNinhoNutella3kg.unitPriceInCents, 20000);
+  assert.equal(
+    getCartItemVariantLabel(cakeBrigadeiro2kg),
+    "Brigadeiro • 2 kg",
+  );
+  assert.notEqual(cakeBrigadeiro1kg.id, cakeBrigadeiro2kg.id);
+
+  const cakeCart = addOrIncrementCartItem(
+    addOrIncrementCartItem([], cakeBrigadeiro1kg),
+    createCartItem(brownieCake, {
+      flavor: "Brigadeiro",
+      size: "1kg",
+    }),
+  );
+  assert.equal(cakeCart.length, 1);
+  assert.equal(cakeCart[0].quantity, 2);
+
+  const brownieRoll = getProduct("rocambole-de-brownie");
+  assert.equal(brownieRoll.name, "Rocambole de brownie");
+  assert.deepEqual(getProductPricePresentation(brownieRoll), {
+    kind: "fixed",
+    priceInCents: 9000,
+  });
+  assert.deepEqual(
+    brownieRoll.flavors.map(({ name }) => name),
+    [
+      "Ninho com Nutella",
+      "Brigadeiro",
+      "Brigadeiro branco",
+      "Ninho",
+      "Bem casado",
+    ],
+  );
+  assert.equal(createCartItem(brownieRoll), null);
+
+  const rollBrigadeiro = createCartItem(brownieRoll, {
+    flavor: "Brigadeiro",
+  });
+  const rollNinhoNutella = createCartItem(brownieRoll, {
+    flavor: "Ninho com Nutella",
+  });
+
+  assert.ok(rollBrigadeiro);
+  assert.ok(rollNinhoNutella);
+  assert.equal(rollBrigadeiro.unitPriceInCents, 9000);
+  assert.equal(rollNinhoNutella.unitPriceInCents, 9000);
+  assert.notEqual(rollBrigadeiro.id, rollNinhoNutella.id);
+
+  const rollCart = addOrIncrementCartItem(
+    addOrIncrementCartItem([], rollBrigadeiro),
+    createCartItem(brownieRoll, { flavor: "Brigadeiro" }),
+  );
+  assert.equal(rollCart.length, 1);
+  assert.equal(rollCart[0].quantity, 2);
+
+  const checkoutItems = [
+    cakeBrigadeiro1kg,
+    { ...cakeBrigadeiro2kg, quantity: 2 },
+    cakeNinhoNutella3kg,
+    { ...rollBrigadeiro, quantity: 2 },
+    rollNinhoNutella,
+  ];
+  const checkoutTotalInCents = checkoutItems.reduce(
+    (total, item) => total + item.unitPriceInCents * item.quantity,
+    0,
+  );
+  assert.equal(checkoutTotalInCents, 87000);
+
+  assert.equal(
+    products.some((product) => product.priceType === "consult"),
+    false,
+  );
 
   assert.equal(brigadeiro.unitPriceInCents, 1700);
 
   console.log(
-    "Validação de preços concluída: fixo, por sabor, itens distintos, total e consulta.",
+    "Validação de preços concluída: fixo, por sabor, por tamanho, variantes e totais.",
   );
 } finally {
   await vite.close();

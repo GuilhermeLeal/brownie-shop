@@ -4,12 +4,14 @@ import { useState } from "react";
 
 import { useCart } from "@/contexts/cart-context";
 import type { CartItem as CartItemType } from "@/types/cart";
+import { getCartItemVariantLabel } from "@/utils/cart-item";
 import { formatCurrency } from "@/utils/format-currency";
 
 export function CartItem({ item }: { item: CartItemType }) {
   const { increaseQuantity, decreaseQuantity, removeItem } = useCart();
   const [isRemoving, setIsRemoving] = useState(false);
   const subtotalInCents = item.unitPriceInCents * item.quantity;
+  const variantLabel = getCartItemVariantLabel(item);
 
   function requestRemoval() {
     if (!isRemoving) {
@@ -42,9 +44,9 @@ export function CartItem({ item }: { item: CartItemType }) {
             <h3 className="font-heading text-lg font-bold leading-tight">
               {item.name}
             </h3>
-            {item.flavor && (
+            {variantLabel && (
               <p className="mt-1 text-sm text-chocolate/65">
-                Sabor: {item.flavor}
+                {variantLabel}
               </p>
             )}
           </div>

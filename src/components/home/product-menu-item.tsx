@@ -16,7 +16,9 @@ type ProductMenuItemProps = {
   index: number;
   isOrderMode: boolean;
   selectedFlavor: string | null;
+  selectedSize: string | null;
   onFlavorToggle: (productId: string, flavor: string) => void;
+  onSizeToggle: (productId: string, size: string) => void;
   onProductInteraction: (productId: string) => void;
   onProductAdded: (productId: string) => void;
 };
@@ -26,17 +28,23 @@ export function ProductMenuItem({
   index,
   isOrderMode,
   selectedFlavor,
+  selectedSize,
   onFlavorToggle,
+  onSizeToggle,
   onProductInteraction,
   onProductAdded,
 }: ProductMenuItemProps) {
   const { addProduct } = useCart();
-  const [showFlavorError, setShowFlavorError] = useState(false);
+  const [selectionErrors, setSelectionErrors] = useState({
+    flavor: false,
+    size: false,
+  });
   const [wasAdded, setWasAdded] = useState(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageOnRight = index % 2 !== 0;
   const itemNumber = String(index + 1).padStart(2, "0");
   const flavorErrorId = `${product.id}-flavor-error`;
+  const sizeErrorId = `${product.id}-size-error`;
   const blockColor = index % 2 === 0 ? "bg-secondary/40" : "bg-primary/40";
   const desktopColumns = imageOnRight
     ? "md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"
@@ -50,6 +58,9 @@ export function ProductMenuItem({
         }${formatCurrency(pricePresentation.priceInCents)}`;
   const hasSelectableFlavors =
     isOrderMode && product.priceType !== "consult";
+  const sizeOptions =
+    product.priceType === "by-size" ? product.sizes : undefined;
+  const hasSelectableSizes = isOrderMode && Boolean(sizeOptions?.length);
 
   useEffect(() => {
     return () => {
@@ -60,8 +71,19 @@ export function ProductMenuItem({
   }, []);
 
   function handleFlavorClick(flavor: string) {
-    setShowFlavorError(false);
+    setSelectionErrors((currentErrors) => ({
+      ...currentErrors,
+      flavor: false,
+    }));
     onFlavorToggle(product.id, flavor);
+  }
+
+  function handleSizeClick(size: string) {
+    setSelectionErrors((currentErrors) => ({
+      ...currentErrors,
+      size: false,
+    }));
+    onSizeToggle(product.id, size);
   }
 
   function handleAddProduct() {
@@ -71,23 +93,30 @@ export function ProductMenuItem({
       return;
     }
 
-    if (product.flavors?.length && !selectedFlavor) {
-      setShowFlavorError(true);
+    const missingFlavor = Boolean(product.flavors?.length && !selectedFlavor);
+    const missingSize = Boolean(sizeOptions?.length && !selectedSize);
+
+    setSelectionErrors({ flavor: missingFlavor, size: missingSize });
+
+    if (missingFlavor || missingSize) {
       setWasAdded(false);
       return;
     }
 
-    const wasSuccessfullyAdded = addProduct(
-      product,
-      selectedFlavor ?? undefined,
-    );
+    const wasSuccessfullyAdded = addProduct(product, {
+      flavor: selectedFlavor ?? undefined,
+      size: selectedSize ?? undefined,
+    });
 
     if (!wasSuccessfullyAdded) {
-      setShowFlavorError(true);
+      setSelectionErrors({
+        flavor: Boolean(product.flavors?.length),
+        size: Boolean(sizeOptions?.length),
+      });
       return;
     }
 
-    setShowFlavorError(false);
+    setSelectionErrors({ flavor: false, size: false });
     setWasAdded(true);
     onProductAdded(product.id);
 
@@ -150,7 +179,11 @@ export function ProductMenuItem({
         {product.flavors && (
           <div className="mt-7 border-l-4 border-chocolate/20 pl-4">
             {hasSelectableFlavors ? (
-              <fieldset aria-describedby={showFlavorError ? flavorErrorId : undefined}>
+              <fieldset
+                aria-describedby={
+                  selectionErrors.flavor ? flavorErrorId : undefined
+                }
+              >
                 <legend className="text-sm font-bold">Sabores</legend>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {product.flavors.map((flavor) => {
@@ -193,13 +226,73 @@ export function ProductMenuItem({
               </>
             )}
 
-            {hasSelectableFlavors && showFlavorError && (
+            {hasSelectableFlavors && selectionErrors.flavor && (
               <p
                 id={flavorErrorId}
                 role="alert"
                 className="mt-3 text-sm font-semibold text-chocolate"
               >
                 Escolha um sabor para continuar.
+              </p>
+            )}
+          </div>
+        )}
+
+        {sizeOptions && (
+          <div className="mt-7 border-l-4 border-chocolate/20 pl-4">
+            {hasSelectableSizes ? (
+              <fieldset
+                aria-describedby={selectionErrors.size ? sizeErrorId : undefined}
+              >
+                <legend className="text-sm font-bold">Tamanhos</legend>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {sizeOptions.map((size) => {
+                    const isSelected = selectedSize === size.value;
+
+                    return (
+                      <button
+                        key={size.value}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => handleSizeClick(size.value)}
+                        className={`cursor-pointer rounded-full border px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 ${
+                          isSelected
+                            ? "border-chocolate bg-chocolate font-semibold text-white"
+                            : "border-chocolate/20 bg-white/85 text-chocolate/75 hover:bg-white"
+                        }`}
+                      >
+                        {size.label} — {formatCurrency(size.priceInCents)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ) : (
+              <>
+                <p className="text-sm font-bold">Tamanhos</p>
+                <ul
+                  className="mt-3 flex flex-wrap gap-2"
+                  aria-label={`Tamanhos de ${product.name}`}
+                >
+                  {sizeOptions.map((size) => (
+                    <li
+                      key={size.value}
+                      className="rounded-full bg-white/60 px-3 py-2 text-sm text-chocolate/75"
+                    >
+                      {size.label} — {formatCurrency(size.priceInCents)}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {hasSelectableSizes && selectionErrors.size && (
+              <p
+                id={sizeErrorId}
+                role="alert"
+                className="mt-3 text-sm font-semibold text-chocolate"
+              >
+                Escolha um tamanho para continuar.
               </p>
             )}
           </div>

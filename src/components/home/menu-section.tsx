@@ -9,9 +9,10 @@ import { useCheckout } from "@/contexts/checkout-context";
 import { useOrderMode } from "@/contexts/order-mode-context";
 import { products } from "@/data/products";
 
-type ActiveFlavorSelection = {
+type ActiveProductSelection = {
   productId: string;
-  flavor: string;
+  flavor?: string;
+  size?: string;
 };
 
 export function MenuSection() {
@@ -21,34 +22,54 @@ export function MenuSection() {
   const exitOrderButtonRef = useRef<HTMLButtonElement>(null);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [exitItemCount, setExitItemCount] = useState(0);
-  const [activeFlavorSelection, setActiveFlavorSelection] =
-    useState<ActiveFlavorSelection | null>(null);
+  const [activeProductSelection, setActiveProductSelection] =
+    useState<ActiveProductSelection | null>(null);
 
   function handleFlavorToggle(productId: string, flavor: string) {
-    setActiveFlavorSelection((currentSelection) => {
-      const clickedSelectedFlavor =
-        currentSelection?.productId === productId &&
-        currentSelection.flavor === flavor;
+    setActiveProductSelection((currentSelection) => {
+      const selection =
+        currentSelection?.productId === productId
+          ? currentSelection
+          : { productId };
+      const nextSelection = {
+        ...selection,
+        flavor: selection.flavor === flavor ? undefined : flavor,
+      };
 
-      return clickedSelectedFlavor ? null : { productId, flavor };
+      return nextSelection.flavor || nextSelection.size ? nextSelection : null;
+    });
+  }
+
+  function handleSizeToggle(productId: string, size: string) {
+    setActiveProductSelection((currentSelection) => {
+      const selection =
+        currentSelection?.productId === productId
+          ? currentSelection
+          : { productId };
+      const nextSelection = {
+        ...selection,
+        size: selection.size === size ? undefined : size,
+      };
+
+      return nextSelection.flavor || nextSelection.size ? nextSelection : null;
     });
   }
 
   function handleProductInteraction(productId: string) {
-    setActiveFlavorSelection((currentSelection) =>
+    setActiveProductSelection((currentSelection) =>
       currentSelection?.productId !== productId ? null : currentSelection,
     );
   }
 
-  function clearProductFlavorSelection(productId: string) {
-    setActiveFlavorSelection((currentSelection) =>
+  function clearProductSelection(productId: string) {
+    setActiveProductSelection((currentSelection) =>
       currentSelection?.productId === productId ? null : currentSelection,
     );
   }
 
   function handleExitOrderMode() {
     if (items.length === 0) {
-      setActiveFlavorSelection(null);
+      setActiveProductSelection(null);
       resetCheckout();
       stopOrderMode();
       return;
@@ -62,7 +83,7 @@ export function MenuSection() {
     clearCart();
     closeCart();
     resetCheckout();
-    setActiveFlavorSelection(null);
+    setActiveProductSelection(null);
     stopOrderMode();
     setIsExitModalOpen(false);
   }
@@ -136,13 +157,19 @@ export function MenuSection() {
                 index={index}
                 isOrderMode={isOrderMode}
                 selectedFlavor={
-                  activeFlavorSelection?.productId === product.id
-                    ? activeFlavorSelection.flavor
+                  activeProductSelection?.productId === product.id
+                    ? (activeProductSelection.flavor ?? null)
+                    : null
+                }
+                selectedSize={
+                  activeProductSelection?.productId === product.id
+                    ? (activeProductSelection.size ?? null)
                     : null
                 }
                 onFlavorToggle={handleFlavorToggle}
+                onSizeToggle={handleSizeToggle}
                 onProductInteraction={handleProductInteraction}
-                onProductAdded={clearProductFlavorSelection}
+                onProductAdded={clearProductSelection}
               />
             </li>
           ))}

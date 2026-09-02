@@ -1,8 +1,5 @@
 import type { Product } from "@/types/product";
 
-const TEMPORARY_DESCRIPTION =
-  "Descrição provisória: lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-
 const FLAVOR_NAMES = [
   "Ninho com Nutella",
   "Brigadeiro",
@@ -19,14 +16,21 @@ const BROWNIE_POT_FLAVORS = [
   { name: "Bem casado", priceInCents: 1700 },
 ] as const;
 
-const BROWNIE_CAKE_FLAVORS = FLAVOR_NAMES.map((name) => ({ name }));
+const BRIGADEIRO_FLAVORS = FLAVOR_NAMES.map((name) => ({ name }));
 
-// Descrições e imagens ainda são temporárias; nomes e preços estão atualizados.
+const BROWNIE_CAKE_SIZES = [
+  { value: "1kg", label: "1 kg", priceInCents: 10000 },
+  { value: "2kg", label: "2 kg", priceInCents: 15000 },
+  { value: "3kg", label: "3 kg", priceInCents: 20000 },
+] as const;
+
+// Imagens temporárias: substituir pelas fotografias reais quando disponíveis.
 export const products = [
   {
     id: "brownie-tradicional",
     name: "Brownie tradicional",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Brownie com chocolate 50%, molhadinho por dentro e com casquinha crocante por fora.",
     priceType: "fixed",
     priceInCents: 600,
     image: "/images/demo/demo-bestseller-01.png",
@@ -34,7 +38,8 @@ export const products = [
   {
     id: "brownie-nutella",
     name: "Brownie com Nutella",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Brownie com chocolate 50%, finalizado com uma camada generosa de Nutella.",
     priceType: "fixed",
     priceInCents: 800,
     image: "/images/demo/demo-bestseller-02.png",
@@ -42,7 +47,8 @@ export const products = [
   {
     id: "brownie-amendoim",
     name: "Brownie com amendoim",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Brownie com chocolate 50% e pedaços de amendoim, trazendo crocância a cada mordida.",
     priceType: "fixed",
     priceInCents: 800,
     image: "/images/demo/demo-bestseller-03.png",
@@ -50,7 +56,8 @@ export const products = [
   {
     id: "brownie-chocolate-50",
     name: "Brownie com casquinha de chocolate 50%",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Brownie com chocolate 50%, finalizado com uma casquinha de chocolate 50%.",
     priceType: "fixed",
     priceInCents: 800,
     image: "/images/demo/demo-hero-brownies.png",
@@ -58,7 +65,8 @@ export const products = [
   {
     id: "brownie-de-pote",
     name: "Brownie de pote",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Cubinhos de brownie com recheio de brigadeiro à sua escolha. Aproximadamente 300 g.",
     priceType: "by-flavor",
     image: "/images/demo/demo-bestseller-01.png",
     flavors: BROWNIE_POT_FLAVORS,
@@ -66,15 +74,18 @@ export const products = [
   {
     id: "bolo-de-brownie",
     name: "Bolo de brownie",
-    description: TEMPORARY_DESCRIPTION,
-    priceType: "consult",
+    description:
+      "Bolo feito com massa de brownie, recheado com brigadeiro à sua escolha e finalizado de forma artesanal. Disponível em diferentes tamanhos.",
+    priceType: "by-size",
     image: "/images/demo/demo-bestseller-02.png",
-    flavors: BROWNIE_CAKE_FLAVORS,
+    flavors: BRIGADEIRO_FLAVORS,
+    sizes: BROWNIE_CAKE_SIZES,
   },
   {
     id: "bombom-de-morango",
     name: "Bombom de morango",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Morango fresquinho coberto com brigadeiro branco e banhado em chocolate 50%.",
     priceType: "fixed",
     priceInCents: 1200,
     image: "/images/demo/demo-bestseller-03.png",
@@ -82,7 +93,8 @@ export const products = [
   {
     id: "brownie-bits",
     name: "Brownie bits 100g",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Mini brownies em cubos, banhados em chocolate 50%. Aproximadamente 100 g.",
     priceType: "fixed",
     priceInCents: 1800,
     image: "/images/demo/demo-hero-brownies.png",
@@ -91,7 +103,7 @@ export const products = [
     id: "bombom-de-brownie",
     name: "Bombom de brownie com recheio",
     description:
-      "Produto com aproximadamente 2 kg. Descrição completa em breve.",
+      "Casquinha de chocolate 50% recheada com cubos de brownie e brigadeiro à sua escolha. Aproximadamente 1,5 kg.",
     priceType: "fixed",
     priceInCents: 12000,
     image: "/images/demo/demo-bestseller-01.png",
@@ -99,9 +111,20 @@ export const products = [
   {
     id: "super-brownie-de-pote",
     name: "Super brownie de pote",
-    description: TEMPORARY_DESCRIPTION,
+    description:
+      "Cubinhos de brownie com uma porção ainda mais generosa de brigadeiro à sua escolha. Aproximadamente 800 g.",
     priceType: "fixed",
     priceInCents: 6000,
     image: "/images/demo/demo-bestseller-02.png",
+  },
+  {
+    id: "rocambole-de-brownie",
+    name: "Rocambole de brownie",
+    description:
+      "Massa de brownie enrolada com recheio de brigadeiro à sua escolha e banhada em chocolate 50%. Aproximadamente 800 g.",
+    priceType: "fixed",
+    priceInCents: 9000,
+    image: "/images/demo/demo-bestseller-03.png",
+    flavors: BRIGADEIRO_FLAVORS,
   },
 ] satisfies readonly Product[];
