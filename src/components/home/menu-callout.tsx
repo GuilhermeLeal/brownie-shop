@@ -1,4 +1,10 @@
+"use client";
+
+import { useOrderMode } from "@/contexts/order-mode-context";
+
 export function MenuCallout() {
+  const { isOrderMode, startOrderMode } = useOrderMode();
+
   return (
     <section
       className="site-container py-20 sm:py-24 lg:py-28"
@@ -25,12 +31,21 @@ export function MenuCallout() {
           <p className="mx-auto mt-4 max-w-xl text-pretty leading-7 text-chocolate/75">
             Descubra abaixo todas as opções disponíveis no nosso cardápio.
           </p>
-          <a
-            href="#cardapio"
-            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 font-bold text-chocolate transition-colors hover:bg-chocolate hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
-          >
-            Ver cardápio completo
-          </a>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <a
+              href="#cardapio"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-6 py-3 font-bold text-chocolate transition-colors hover:bg-chocolate hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-secondary sm:w-auto"
+            >
+              Ver cardápio completo
+            </a>
+            <button
+              type="button"
+              onClick={startOrderMode}
+              className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-primary px-6 py-3 font-bold text-chocolate transition-colors hover:bg-chocolate hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-secondary sm:w-auto"
+            >
+              {isOrderMode ? "Continuar pedido" : "Fazer pedido"}
+            </button>
+          </div>
         </div>
       </div>
     </section>
