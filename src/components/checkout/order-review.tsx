@@ -1,8 +1,15 @@
 "use client";
 
+import { useState } from "react";
+
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
 import { useLocalToday } from "@/hooks/use-local-today";
+import {
+  OrderSubmissionError,
+  submitOrder,
+} from "@/services/order-api";
+import type { CreateOrderInput } from "@/types/order";
 import { getCartItemVariantLabel } from "@/utils/cart-item";
 import { formatCurrency } from "@/utils/format-currency";
 import { formatDateInputValue } from "@/utils/date";
@@ -14,11 +21,60 @@ type OrderReviewProps = {
 
 export function OrderReview({ onBack }: OrderReviewProps) {
   const { items, totalQuantity, totalInCents } = useCart();
-  const { orderDetails } = useCheckout();
+  const { orderDetails, completeOrder } = useCheckout();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const localToday = useLocalToday();
   const isDelivery = orderDetails.fulfillmentMethod === "delivery";
   const isSameDay =
     Boolean(localToday) && orderDetails.desiredDate === localToday;
+
+  async function handleSubmit() {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!orderDetails.fulfillmentMethod || items.length === 0) {
+      setSubmissionError(
+        "Revise os dados e os produtos antes de finalizar o pedido.",
+      );
+      return;
+    }
+
+    const input: CreateOrderInput = {
+      customerName: orderDetails.name,
+      customerPhone: orderDetails.phone,
+      requestedDate: orderDetails.desiredDate,
+      fulfillmentType: orderDetails.fulfillmentMethod,
+      deliveryAddress:
+        orderDetails.fulfillmentMethod === "delivery"
+          ? orderDetails.address
+          : undefined,
+      notes: orderDetails.notes || undefined,
+      items: items.map((item) => ({
+        productId: item.productId,
+        flavor: item.flavor,
+        size: item.size?.value,
+        quantity: item.quantity,
+      })),
+    };
+
+    setIsSubmitting(true);
+    setSubmissionError(null);
+
+    try {
+      const createdOrder = await submitOrder(input);
+      completeOrder(createdOrder);
+    } catch (error) {
+      setSubmissionError(
+        error instanceof OrderSubmissionError
+          ? error.message
+          : "Não foi possível registrar o pedido. Tente novamente.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -192,19 +248,25 @@ export function OrderReview({ onBack }: OrderReviewProps) {
           </button>
           <button
             type="button"
-            disabled
-            aria-describedby="finalization-pending-note"
-            className="min-h-12 cursor-not-allowed rounded-full bg-chocolate px-4 py-3 font-bold text-white opacity-55"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            aria-describedby={
+              submissionError ? "order-submission-error" : undefined
+            }
+            className="min-h-12 rounded-full bg-chocolate px-4 py-3 font-bold text-white transition-colors enabled:cursor-pointer enabled:hover:bg-primary enabled:hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
           >
-            Finalizar pedido
+            {isSubmitting ? "Finalizando..." : "Finalizar pedido"}
           </button>
         </div>
-        <p
-          id="finalization-pending-note"
-          className="mt-3 text-center text-xs leading-5 text-chocolate/55"
-        >
-          A confirmação do pedido será habilitada na próxima etapa.
-        </p>
+        {submissionError && (
+          <p
+            id="order-submission-error"
+            role="alert"
+            className="mt-3 rounded-2xl bg-primary/20 px-4 py-3 text-sm font-semibold leading-6"
+          >
+            {submissionError}
+          </p>
+        )}
       </footer>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { ORDER_NOTES_MAX_LENGTH } from "@/constants/order";
 import { useCheckout } from "@/contexts/checkout-context";
 import { useLocalToday } from "@/hooks/use-local-today";
 import type {
@@ -318,14 +319,14 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
                 Observações <span className="font-normal">(opcional)</span>
               </label>
               <span className="text-xs text-chocolate/50" aria-hidden="true">
-                {orderDetails.notes.length}/500
+                {orderDetails.notes.length}/{ORDER_NOTES_MAX_LENGTH}
               </span>
             </div>
             <textarea
               id="checkout-notes"
               name="notes"
               rows={4}
-              maxLength={500}
+              maxLength={ORDER_NOTES_MAX_LENGTH}
               value={orderDetails.notes}
               onChange={(event) =>
                 updateOrderDetails({ notes: event.target.value })

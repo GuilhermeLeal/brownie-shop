@@ -1,4 +1,4 @@
-export type CheckoutStep = "cart" | "details" | "review";
+export type CheckoutStep = "cart" | "details" | "review" | "success";
 
 export type FulfillmentMethod = "delivery" | "pickup";
 

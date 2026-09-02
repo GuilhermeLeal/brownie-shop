@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { CartView } from "@/components/cart/cart-view";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { OrderReview } from "@/components/checkout/order-review";
+import { OrderSuccess } from "@/components/checkout/order-success";
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
 import type { CheckoutStep } from "@/types/checkout";
@@ -13,12 +14,14 @@ const stepTitles: Record<CheckoutStep, string> = {
   cart: "Seu pedido",
   details: "Dados do pedido",
   review: "Revise seu pedido",
+  success: "Pedido criado",
 };
 
 const stepNumbers: Record<CheckoutStep, number> = {
   cart: 1,
   details: 2,
   review: 3,
+  success: 4,
 };
 
 export function CartDrawer() {
@@ -27,7 +30,7 @@ export function CartDrawer() {
   const previousStepRef = useRef<CheckoutStep>("cart");
   const previousBodyOverflowRef = useRef<string | null>(null);
   const { items, isCartOpen, closeCart } = useCart();
-  const { step, setStep } = useCheckout();
+  const { step, createdOrder, setStep } = useCheckout();
   const activeStep: CheckoutStep = items.length === 0 ? "cart" : step;
 
   const restorePageScroll = useCallback(() => {
@@ -127,7 +130,7 @@ export function CartDrawer() {
         <header className="flex items-start justify-between gap-4 border-b border-chocolate/10 px-5 py-5 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-chocolate/55">
-              Modo pedido · Etapa {stepNumbers[activeStep]} de 3
+              Modo pedido · Etapa {stepNumbers[activeStep]} de 4
             </p>
             <h2
               ref={titleRef}
@@ -170,6 +173,9 @@ export function CartDrawer() {
         )}
         {activeStep === "review" && (
           <OrderReview onBack={() => setStep("details")} />
+        )}
+        {activeStep === "success" && createdOrder && (
+          <OrderSuccess order={createdOrder} onClose={closeCart} />
         )}
       </section>
     </dialog>

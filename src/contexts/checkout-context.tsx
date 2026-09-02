@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import type { CheckoutStep, OrderDetails } from "@/types/checkout";
+import type { CreatedOrder } from "@/types/order";
 
 const initialOrderDetails: OrderDetails = {
   name: "",
@@ -23,8 +24,10 @@ const initialOrderDetails: OrderDetails = {
 type CheckoutContextValue = {
   step: CheckoutStep;
   orderDetails: OrderDetails;
+  createdOrder: CreatedOrder | null;
   setStep: (step: CheckoutStep) => void;
   updateOrderDetails: (updates: Partial<OrderDetails>) => void;
+  completeOrder: (order: CreatedOrder) => void;
   resetCheckout: () => void;
 };
 
@@ -34,6 +37,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [orderDetails, setOrderDetails] =
     useState<OrderDetails>(initialOrderDetails);
+  const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
 
   const updateOrderDetails = useCallback(
     (updates: Partial<OrderDetails>) => {
@@ -45,20 +49,35 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const completeOrder = useCallback((order: CreatedOrder) => {
+    setCreatedOrder(order);
+    setStep("success");
+  }, []);
+
   const resetCheckout = useCallback(() => {
     setStep("cart");
     setOrderDetails(initialOrderDetails);
+    setCreatedOrder(null);
   }, []);
 
   const value = useMemo(
     () => ({
       step,
       orderDetails,
+      createdOrder,
       setStep,
       updateOrderDetails,
+      completeOrder,
       resetCheckout,
     }),
-    [step, orderDetails, updateOrderDetails, resetCheckout],
+    [
+      step,
+      orderDetails,
+      createdOrder,
+      updateOrderDetails,
+      completeOrder,
+      resetCheckout,
+    ],
   );
 
   return (
