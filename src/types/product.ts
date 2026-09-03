@@ -2,7 +2,7 @@ type ProductBase = {
   id: string;
   name: string;
   description: string;
-  image: string;
+  images: readonly string[];
 };
 
 export type ProductFlavor = {

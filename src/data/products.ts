@@ -24,7 +24,8 @@ const BROWNIE_CAKE_SIZES = [
   { value: "3kg", label: "3 kg", priceInCents: 20000 },
 ] as const;
 
-// Imagens temporárias: substituir pelas fotografias reais quando disponíveis.
+// Caminhos definitivos: substitua os arquivos em public/images/products pelas
+// fotografias reais, mantendo estes nomes para não precisar alterar o código.
 export const products = [
   {
     id: "brownie-tradicional",
@@ -33,7 +34,7 @@ export const products = [
       "Brownie com chocolate 50%, molhadinho por dentro e com casquinha crocante por fora.",
     priceType: "fixed",
     priceInCents: 600,
-    image: "/images/demo/demo-bestseller-01.png",
+    images: ["/images/products/brownie-t.webp"],
   },
   {
     id: "brownie-nutella",
@@ -42,7 +43,7 @@ export const products = [
       "Brownie com chocolate 50%, finalizado com uma camada generosa de Nutella.",
     priceType: "fixed",
     priceInCents: 800,
-    image: "/images/demo/demo-bestseller-02.png",
+    images: ["/images/products/brownie-nutella.webp"],
   },
   {
     id: "brownie-amendoim",
@@ -51,7 +52,7 @@ export const products = [
       "Brownie com chocolate 50% e pedaços de amendoim, trazendo crocância a cada mordida.",
     priceType: "fixed",
     priceInCents: 800,
-    image: "/images/demo/demo-bestseller-03.png",
+    images: ["/images/products/brownie-amendoim.webp"],
   },
   {
     id: "brownie-chocolate-50",
@@ -60,7 +61,7 @@ export const products = [
       "Brownie com chocolate 50%, finalizado com uma casquinha de chocolate 50%.",
     priceType: "fixed",
     priceInCents: 800,
-    image: "/images/demo/demo-hero-brownies.png",
+    images: ["/images/products/brownie-chocolate-50.webp"],
   },
   {
     id: "brownie-de-pote",
@@ -68,7 +69,7 @@ export const products = [
     description:
       "Cubinhos de brownie com recheio de brigadeiro à sua escolha. Aproximadamente 300 g.",
     priceType: "by-flavor",
-    image: "/images/demo/demo-bestseller-01.png",
+    images: ["/images/products/brownie-pote.webp"],
     flavors: BROWNIE_POT_FLAVORS,
   },
   {
@@ -77,7 +78,11 @@ export const products = [
     description:
       "Bolo feito com massa de brownie, recheado com brigadeiro à sua escolha e finalizado de forma artesanal. Disponível em diferentes tamanhos.",
     priceType: "by-size",
-    image: "/images/demo/demo-bestseller-02.png",
+    images: [
+      "/images/products/bolo-brownie-1.webp",
+      "/images/products/bolo-brownie-2.webp",
+      "/images/products/bolo-brownie-3.webp",
+    ],
     flavors: BRIGADEIRO_FLAVORS,
     sizes: BROWNIE_CAKE_SIZES,
   },
@@ -88,7 +93,7 @@ export const products = [
       "Morango fresquinho coberto com brigadeiro branco e banhado em chocolate 50%.",
     priceType: "fixed",
     priceInCents: 1200,
-    image: "/images/demo/demo-bestseller-03.png",
+    images: ["/images/products/bombom-morango.webp"],
   },
   {
     id: "brownie-bits",
@@ -97,7 +102,7 @@ export const products = [
       "Mini brownies em cubos, banhados em chocolate 50%. Aproximadamente 100 g.",
     priceType: "fixed",
     priceInCents: 1800,
-    image: "/images/demo/demo-hero-brownies.png",
+    images: ["/images/products/brownie-bits.webp"],
   },
   {
     id: "bombom-de-brownie",
@@ -106,7 +111,7 @@ export const products = [
       "Casquinha de chocolate 50% recheada com cubos de brownie e brigadeiro à sua escolha. Aproximadamente 1,5 kg.",
     priceType: "fixed",
     priceInCents: 12000,
-    image: "/images/demo/demo-bestseller-01.png",
+    images: ["/images/products/bombom-brownie.webp"],
     flavors: BRIGADEIRO_FLAVORS,
   },
   {
@@ -116,7 +121,7 @@ export const products = [
       "Cubinhos de brownie com uma porção ainda mais generosa de brigadeiro à sua escolha. Aproximadamente 800 g.",
     priceType: "fixed",
     priceInCents: 6000,
-    image: "/images/demo/demo-bestseller-02.png",
+    images: ["/images/products/super-brownie-pote.webp"],
   },
   {
     id: "rocambole-de-brownie",
@@ -125,7 +130,7 @@ export const products = [
       "Massa de brownie enrolada com recheio de brigadeiro à sua escolha e banhada em chocolate 50%. Aproximadamente 800 g.",
     priceType: "fixed",
     priceInCents: 9000,
-    image: "/images/demo/demo-bestseller-03.png",
+    images: ["/images/products/rocambole-brownie.webp"],
     flavors: BRIGADEIRO_FLAVORS,
   },
 ] satisfies readonly Product[];

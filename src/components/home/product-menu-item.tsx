@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+import { ProductImageCarousel } from "@/components/home/product-image-carousel";
 import { useCart } from "@/contexts/cart-context";
 import type { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/format-currency";
@@ -141,22 +141,13 @@ export function ProductMenuItem({
     <article
       className={`grid items-center gap-6 rounded-[2.25rem] p-5 sm:gap-8 sm:rounded-[3rem] sm:p-8 md:gap-10 md:p-10 lg:gap-14 lg:p-12 ${blockColor} ${desktopColumns}`}
     >
-      <figure
-        className={`relative aspect-[8/5] overflow-hidden rounded-[1.5rem] bg-white/30 sm:rounded-[2rem] md:aspect-[4/3] ${
+      <ProductImageCarousel
+        images={product.images}
+        productName={product.name}
+        className={`${
           imageOnRight ? "md:order-2" : "md:order-1"
         }`}
-      >
-        <Image
-          src={product.image}
-          alt={`Imagem temporária de demonstração para ${product.name}.`}
-          fill
-          sizes="(min-width: 1200px) 430px, (min-width: 768px) 38vw, 100vw"
-          className="object-cover"
-        />
-        <figcaption className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur-sm sm:bottom-4 sm:left-4">
-          Imagem temporária
-        </figcaption>
-      </figure>
+      />
 
       <div
         className={`max-w-lg ${

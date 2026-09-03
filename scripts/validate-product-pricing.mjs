@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { createServer } from "vite";
@@ -28,6 +29,8 @@ try {
   const { getProductPricePresentation } = await vite.ssrLoadModule(
     "/src/utils/product-price.ts",
   );
+  const { getCircularImageIndex, getSwipeDirection } =
+    await vite.ssrLoadModule("/src/utils/product-image-carousel.ts");
 
   const getProduct = (id) => {
     const product = products.find((candidate) => candidate.id === id);
@@ -43,6 +46,63 @@ try {
     ),
     false,
   );
+
+  const expectedProductImages = new Map([
+    ["brownie-tradicional", ["/images/products/brownie-t.webp"]],
+    ["brownie-nutella", ["/images/products/brownie-nutella.webp"]],
+    ["brownie-amendoim", ["/images/products/brownie-amendoim.webp"]],
+    [
+      "brownie-chocolate-50",
+      ["/images/products/brownie-chocolate-50.webp"],
+    ],
+    ["brownie-de-pote", ["/images/products/brownie-pote.webp"]],
+    [
+      "bolo-de-brownie",
+      [
+        "/images/products/bolo-brownie-1.webp",
+        "/images/products/bolo-brownie-2.webp",
+        "/images/products/bolo-brownie-3.webp",
+      ],
+    ],
+    ["bombom-de-morango", ["/images/products/bombom-morango.webp"]],
+    ["brownie-bits", ["/images/products/brownie-bits.webp"]],
+    ["bombom-de-brownie", ["/images/products/bombom-brownie.webp"]],
+    [
+      "super-brownie-de-pote",
+      ["/images/products/super-brownie-pote.webp"],
+    ],
+    ["rocambole-de-brownie", ["/images/products/rocambole-brownie.webp"]],
+  ]);
+
+  for (const product of products) {
+    assert.equal("image" in product, false);
+    assert.deepEqual(product.images, expectedProductImages.get(product.id));
+    assert.ok(product.images.length > 0);
+
+    for (const image of product.images) {
+      assert.match(image, /^\/images\/products\/[a-z0-9-]+\.webp$/);
+      const absoluteImagePath = path.join(
+        projectRoot,
+        "public",
+        image.replace(/^\//, ""),
+      );
+
+      assert.equal(existsSync(absoluteImagePath), true, image);
+      const imageContents = readFileSync(absoluteImagePath);
+      assert.equal(imageContents.toString("ascii", 0, 4), "RIFF", image);
+      assert.equal(imageContents.toString("ascii", 8, 12), "WEBP", image);
+    }
+  }
+
+  assert.equal(getProduct("brownie-tradicional").images.length, 1);
+  assert.equal(getProduct("bolo-de-brownie").images.length, 3);
+  assert.equal(getCircularImageIndex(0, -1, 3), 2);
+  assert.equal(getCircularImageIndex(2, 1, 3), 0);
+  assert.equal(getCircularImageIndex(1, 1, 3), 2);
+  assert.equal(getSwipeDirection(-64, 8), "next");
+  assert.equal(getSwipeDirection(64, 8), "previous");
+  assert.equal(getSwipeDirection(40, 2), null);
+  assert.equal(getSwipeDirection(64, 80), null);
 
   const fixedPriceExpectations = [
     ["brownie-tradicional", "Brownie tradicional", 600],
