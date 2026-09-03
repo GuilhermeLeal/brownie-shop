@@ -1,12 +1,6 @@
+import { MIN_ORDER_ADVANCE_DAYS } from "@/constants/order";
+
 const dateInputPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-export function getLocalDateInputValue(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
 
 export function getDateInputValueInTimeZone(
   timeZone: string,
@@ -43,6 +37,37 @@ export function isValidDateInputValue(value: string) {
     date.getMonth() === month - 1 &&
     date.getDate() === day
   );
+}
+
+export function addCalendarDaysToDateInputValue(value: string, days: number) {
+  const match = dateInputPattern.exec(value);
+
+  if (!match || !Number.isInteger(days)) {
+    throw new RangeError("Data ou quantidade de dias inválida.");
+  }
+
+  const [, yearValue, monthValue, dayValue] = match;
+  const date = new Date(
+    Date.UTC(
+      Number(yearValue),
+      Number(monthValue) - 1,
+      Number(dayValue) + days,
+    ),
+  );
+
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function getMinimumOrderDate(today: string) {
+  if (!isValidDateInputValue(today)) {
+    throw new RangeError("Data de referência inválida.");
+  }
+
+  return addCalendarDaysToDateInputValue(today, MIN_ORDER_ADVANCE_DAYS);
 }
 
 export function formatDateInputValue(value: string) {

@@ -17,7 +17,6 @@ const initialOrderDetails: OrderDetails = {
   phone: "",
   desiredDate: "",
   fulfillmentMethod: "",
-  address: "",
   notes: "",
 };
 

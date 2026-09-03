@@ -7,7 +7,11 @@ import {
 import { products } from "@/data/products";
 import type { FulfillmentMethod } from "@/types/checkout";
 import type { Product } from "@/types/product";
-import { getDateInputValueInTimeZone, isValidDateInputValue } from "@/utils/date";
+import {
+  getDateInputValueInTimeZone,
+  getMinimumOrderDate,
+  isValidDateInputValue,
+} from "@/utils/date";
 import { createCartItemId } from "@/utils/cart-item";
 import { resolveProductSelection } from "@/utils/product-price";
 
@@ -29,7 +33,6 @@ export type ValidatedOrder = {
   customerPhone: string;
   requestedDate: string;
   fulfillmentType: FulfillmentMethod;
-  deliveryAddress: string | null;
   notes: string | null;
   productsTotalCents: number;
   items: ValidatedOrderItem[];
@@ -224,19 +227,15 @@ export function validateCreateOrderPayload(
     throw new OrderValidationError("Informe uma data válida.");
   }
 
-  if (requestedDate < today) {
-    throw new OrderValidationError("Escolha hoje ou uma data futura.");
+  const minimumOrderDate = getMinimumOrderDate(today);
+
+  if (requestedDate < minimumOrderDate) {
+    throw new OrderValidationError(
+      "Escolha uma data com pelo menos 2 dias de antecedência.",
+    );
   }
 
   const fulfillmentType = readFulfillmentType(payload);
-  const rawAddress = readOptionalString(payload, "deliveryAddress", 500);
-  const deliveryAddress =
-    fulfillmentType === "delivery" ? (rawAddress ?? null) : null;
-
-  if (fulfillmentType === "delivery" && !deliveryAddress) {
-    throw new OrderValidationError("Informe o endereço para entrega.");
-  }
-
   const notes = readOptionalString(
     payload,
     "notes",
@@ -257,7 +256,6 @@ export function validateCreateOrderPayload(
     customerPhone,
     requestedDate,
     fulfillmentType,
-    deliveryAddress,
     notes: notes ?? null,
     productsTotalCents,
     items,

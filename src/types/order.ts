@@ -14,7 +14,6 @@ export type CreateOrderInput = {
   customerPhone: string;
   requestedDate: string;
   fulfillmentType: FulfillmentMethod;
-  deliveryAddress?: string;
   notes?: string;
   items: CreateOrderItemInput[];
 };
@@ -28,4 +27,3 @@ export type CreatedOrder = {
 export type CreateOrderErrorResponse = {
   error: string;
 };
-

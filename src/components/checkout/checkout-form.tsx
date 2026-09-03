@@ -2,15 +2,21 @@
 
 import { useState, type FormEvent } from "react";
 
-import { ORDER_NOTES_MAX_LENGTH } from "@/constants/order";
+import {
+  ORDER_NOTES_MAX_LENGTH,
+  SHOP_TIME_ZONE,
+} from "@/constants/order";
 import { useCheckout } from "@/contexts/checkout-context";
-import { useLocalToday } from "@/hooks/use-local-today";
+import { useMinimumOrderDate } from "@/hooks/use-minimum-order-date";
 import type {
   FulfillmentMethod,
   OrderDetailsErrors,
   OrderDetailsField,
 } from "@/types/checkout";
-import { getLocalDateInputValue } from "@/utils/date";
+import {
+  getDateInputValueInTimeZone,
+  getMinimumOrderDate,
+} from "@/utils/date";
 import { formatPhone, normalizePhone } from "@/utils/phone";
 import { validateOrderDetails } from "@/utils/validate-order-details";
 
@@ -19,7 +25,6 @@ const fieldIds: Record<OrderDetailsField, string> = {
   phone: "checkout-phone",
   desiredDate: "checkout-date",
   fulfillmentMethod: "checkout-delivery",
-  address: "checkout-address",
 };
 
 const inputStyles =
@@ -33,10 +38,7 @@ type CheckoutFormProps = {
 export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
   const { orderDetails, updateOrderDetails } = useCheckout();
   const [errors, setErrors] = useState<OrderDetailsErrors>({});
-  const localToday = useLocalToday();
-  const isSameDay =
-    Boolean(localToday) && orderDetails.desiredDate === localToday;
-  const isDelivery = orderDetails.fulfillmentMethod === "delivery";
+  const minimumOrderDate = useMinimumOrderDate();
 
   function clearError(field: OrderDetailsField) {
     setErrors((currentErrors) => {
@@ -51,22 +53,20 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
   }
 
   function chooseFulfillmentMethod(method: FulfillmentMethod) {
-    updateOrderDetails({
-      fulfillmentMethod: method,
-      ...(method === "pickup" ? { address: "" } : {}),
-    });
+    updateOrderDetails({ fulfillmentMethod: method });
     clearError("fulfillmentMethod");
-
-    if (method === "pickup") {
-      clearError("address");
-    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const today = localToday || getLocalDateInputValue();
-    const nextErrors = validateOrderDetails(orderDetails, today);
+    const currentMinimumOrderDate =
+      minimumOrderDate ||
+      getMinimumOrderDate(getDateInputValueInTimeZone(SHOP_TIME_ZONE));
+    const nextErrors = validateOrderDetails(
+      orderDetails,
+      currentMinimumOrderDate,
+    );
     const firstInvalidField = Object.keys(nextErrors)[0] as
       | OrderDetailsField
       | undefined;
@@ -80,7 +80,6 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
 
     updateOrderDetails({
       name: orderDetails.name.trim(),
-      address: orderDetails.address.trim(),
       notes: orderDetails.notes.trim(),
     });
     onReview();
@@ -172,7 +171,7 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
               name="desiredDate"
               type="date"
               required
-              min={localToday || undefined}
+              min={minimumOrderDate || undefined}
               value={orderDetails.desiredDate}
               onChange={(event) => {
                 updateOrderDetails({ desiredDate: event.target.value });
@@ -181,13 +180,17 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
               aria-invalid={Boolean(errors.desiredDate)}
               aria-describedby={
                 errors.desiredDate
-                  ? "checkout-date-error"
-                  : isSameDay
-                    ? "same-day-notice"
-                    : undefined
+                  ? "checkout-date-rule checkout-date-error"
+                  : "checkout-date-rule"
               }
               className={inputStyles}
             />
+            <p
+              id="checkout-date-rule"
+              className="mt-2 text-sm leading-6 text-chocolate/65"
+            >
+              Os pedidos devem ser feitos com no mínimo 2 dias de antecedência.
+            </p>
             {errors.desiredDate && (
               <p
                 id="checkout-date-error"
@@ -198,21 +201,6 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
               </p>
             )}
           </div>
-
-          {isSameDay && (
-            <aside
-              id="same-day-notice"
-              className="rounded-[1.5rem] bg-primary/25 p-4 ring-1 ring-primary/45"
-              aria-live="polite"
-            >
-              <p className="font-heading text-lg font-bold">Pedido para hoje</p>
-              <p className="mt-1 text-sm leading-6 text-chocolate/75">
-                Pedidos realizados para o mesmo dia estão sujeitos à
-                disponibilidade dos produtos. A disponibilidade deverá ser
-                confirmada com a responsável pelo pedido.
-              </p>
-            </aside>
-          )}
 
           <fieldset
             aria-invalid={Boolean(errors.fulfillmentMethod)}
@@ -269,46 +257,17 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
             )}
           </fieldset>
 
-          {isDelivery && (
-            <div>
-              <label htmlFor="checkout-address" className="text-sm font-bold">
-                Endereço para entrega
-              </label>
-              <textarea
-                id="checkout-address"
-                name="address"
-                autoComplete="street-address"
-                required
-                rows={3}
-                value={orderDetails.address}
-                onChange={(event) => {
-                  updateOrderDetails({ address: event.target.value });
-                  clearError("address");
-                }}
-                aria-invalid={Boolean(errors.address)}
-                aria-describedby={
-                  errors.address ? "checkout-address-error" : undefined
-                }
-                className={`${inputStyles} resize-y`}
-              />
-              {errors.address && (
-                <p
-                  id="checkout-address-error"
-                  role="alert"
-                  className="mt-2 text-sm font-semibold"
-                >
-                  {errors.address}
-                </p>
-              )}
-            </div>
-          )}
-
-          {isDelivery && (
+          {orderDetails.fulfillmentMethod && (
             <aside className="rounded-[1.5rem] bg-secondary/25 p-4 ring-1 ring-secondary/45">
-              <p className="font-bold">Sobre a entrega</p>
+              <p className="font-bold">
+                {orderDetails.fulfillmentMethod === "delivery"
+                  ? "Sobre a entrega"
+                  : "Sobre a retirada"}
+              </p>
               <p className="mt-1 text-sm leading-6 text-chocolate/75">
-                A taxa de entrega é de responsabilidade do cliente e não está
-                incluída no total dos produtos.
+                {orderDetails.fulfillmentMethod === "delivery"
+                  ? "A taxa e os detalhes da entrega serão combinados pelo WhatsApp. O custo da entrega é de responsabilidade do cliente."
+                  : "O local e o horário da retirada serão combinados pelo WhatsApp."}
               </p>
             </aside>
           )}

@@ -21,11 +21,18 @@ const vite = await createServer({
 try {
   const { OrderValidationError, validateCreateOrderPayload } =
     await vite.ssrLoadModule("/src/server/orders/validate-order.ts");
+  const { getDateInputValueInTimeZone, getMinimumOrderDate } =
+    await vite.ssrLoadModule("/src/utils/date.ts");
+  const { validateOrderDetails } = await vite.ssrLoadModule(
+    "/src/utils/validate-order-details.ts",
+  );
   const today = "2026-09-02";
+  const tomorrow = "2026-09-03";
+  const minimumOrderDate = "2026-09-04";
   const basePayload = {
     customerName: "Cliente de Teste",
     customerPhone: "(11) 99999-9999",
-    requestedDate: today,
+    requestedDate: minimumOrderDate,
     fulfillmentType: "pickup",
     notes: "Teste automatizado",
   };
@@ -87,6 +94,32 @@ try {
   assert.equal(brownieCake.items[0].flavor, "Ninho com Nutella");
   assert.equal(brownieCake.items[0].size, "3 kg");
 
+  const filledBrownieBonbon = validate({
+    productsTotalCents: 1,
+    items: [
+      {
+        productId: "bombom-de-brownie",
+        flavor: "Brigadeiro",
+        unitPriceInCents: 1,
+        quantity: 1,
+      },
+    ],
+  });
+  assert.equal(filledBrownieBonbon.productsTotalCents, 12000);
+  assert.equal(filledBrownieBonbon.items[0].flavor, "Brigadeiro");
+  assert.equal(filledBrownieBonbon.items[0].unitPriceInCents, 12000);
+
+  const filledBrownieBonbonNinhoNutella = validate({
+    items: [
+      {
+        productId: "bombom-de-brownie",
+        flavor: "Ninho com Nutella",
+        quantity: 1,
+      },
+    ],
+  });
+  assert.equal(filledBrownieBonbonNinhoNutella.productsTotalCents, 12000);
+
   const multipleProducts = validate({
     items: [
       { productId: "brownie-tradicional", quantity: 1 },
@@ -110,26 +143,61 @@ try {
   });
   assert.equal(multipleProducts.productsTotalCents, 26400);
 
-  const delivery = validate({
+  const delivery = validate({ fulfillmentType: "delivery" });
+  assert.equal(delivery.fulfillmentType, "delivery");
+  assert.equal(delivery.productsTotalCents, 600);
+  assert.equal("deliveryAddress" in delivery, false);
+
+  const deliveryWithLegacyAddress = validate({
     fulfillmentType: "delivery",
-    deliveryAddress: "Rua de Teste, 123",
+    deliveryAddress: "Campo antigo deve ser ignorado",
   });
-  assert.equal(delivery.deliveryAddress, "Rua de Teste, 123");
+  assert.equal(deliveryWithLegacyAddress.fulfillmentType, "delivery");
+  assert.equal("deliveryAddress" in deliveryWithLegacyAddress, false);
 
-  const pickup = validate({
-    fulfillmentType: "pickup",
-    deliveryAddress: "Este endereço deve ser ignorado",
-  });
-  assert.equal(pickup.deliveryAddress, null);
+  const pickup = validate({ fulfillmentType: "pickup" });
+  assert.equal(pickup.fulfillmentType, "pickup");
+  assert.equal("deliveryAddress" in pickup, false);
 
-  assert.equal(validate().requestedDate, today);
+  assert.equal(getMinimumOrderDate(today), minimumOrderDate);
+  assert.equal(getMinimumOrderDate("2026-12-31"), "2027-01-02");
+  assert.equal(
+    getDateInputValueInTimeZone(
+      "America/Sao_Paulo",
+      new Date("2026-09-03T01:30:00.000Z"),
+    ),
+    today,
+  );
+  assert.equal(validate().requestedDate, minimumOrderDate);
   assert.equal(
     validate({ requestedDate: "2026-09-06" }).requestedDate,
     "2026-09-06",
   );
+  assert.equal(new Date("2026-09-06T12:00:00.000Z").getUTCDay(), 0);
 
+  const frontendDetails = {
+    name: "Cliente de Teste",
+    phone: "11999999999",
+    desiredDate: minimumOrderDate,
+    fulfillmentMethod: "delivery",
+    notes: "",
+  };
+  assert.deepEqual(
+    validateOrderDetails(frontendDetails, minimumOrderDate),
+    {},
+  );
+  assert.equal(
+    validateOrderDetails(
+      { ...frontendDetails, desiredDate: today },
+      minimumOrderDate,
+    ).desiredDate,
+    "Escolha uma data com pelo menos 2 dias de antecedência.",
+  );
+
+  expectInvalid({ requestedDate: today });
+  expectInvalid({ requestedDate: tomorrow });
   expectInvalid({ requestedDate: "2026-09-01" });
-  expectInvalid({ fulfillmentType: "delivery", deliveryAddress: "" });
+  expectInvalid({ fulfillmentType: "invalid" });
   expectInvalid({ customerName: "   " });
   expectInvalid({ customerPhone: "123" });
   expectInvalid({ items: [] });
@@ -141,6 +209,18 @@ try {
     items: [
       {
         productId: "brownie-de-pote",
+        flavor: "Sabor inexistente",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [{ productId: "bombom-de-brownie", quantity: 1 }],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "bombom-de-brownie",
         flavor: "Sabor inexistente",
         quantity: 1,
       },
@@ -183,7 +263,7 @@ try {
   expectInvalid({ notes: "x".repeat(501) });
 
   console.log(
-    "Validação de pedidos concluída: dados, datas, variantes, limites e reprecificação server-side.",
+    "Validação de pedidos concluída: antecedência, recebimento, variantes, limites e reprecificação server-side.",
   );
 } finally {
   await vite.close();

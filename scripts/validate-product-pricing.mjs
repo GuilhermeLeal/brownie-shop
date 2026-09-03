@@ -55,11 +55,6 @@ try {
     ],
     ["bombom-de-morango", "Bombom de morango", 1200],
     ["brownie-bits", "Brownie bits 100g", 1800],
-    [
-      "bombom-de-brownie",
-      "Bombom de brownie com recheio",
-      12000,
-    ],
     ["super-brownie-de-pote", "Super brownie de pote", 6000],
   ];
 
@@ -185,6 +180,33 @@ try {
   );
   assert.equal(rollCart.length, 1);
   assert.equal(rollCart[0].quantity, 2);
+
+  const filledBrownieBonbon = getProduct("bombom-de-brownie");
+  assert.deepEqual(
+    filledBrownieBonbon.flavors.map(({ name }) => name),
+    brownieRoll.flavors.map(({ name }) => name),
+  );
+  assert.equal(createCartItem(filledBrownieBonbon), null);
+
+  const bonbonBrigadeiro = createCartItem(filledBrownieBonbon, {
+    flavor: "Brigadeiro",
+  });
+  const bonbonNinhoNutella = createCartItem(filledBrownieBonbon, {
+    flavor: "Ninho com Nutella",
+  });
+
+  assert.ok(bonbonBrigadeiro);
+  assert.ok(bonbonNinhoNutella);
+  assert.equal(bonbonBrigadeiro.unitPriceInCents, 12000);
+  assert.equal(bonbonNinhoNutella.unitPriceInCents, 12000);
+  assert.notEqual(bonbonBrigadeiro.id, bonbonNinhoNutella.id);
+
+  const bonbonCart = addOrIncrementCartItem(
+    addOrIncrementCartItem([], bonbonBrigadeiro),
+    createCartItem(filledBrownieBonbon, { flavor: "Brigadeiro" }),
+  );
+  assert.equal(bonbonCart.length, 1);
+  assert.equal(bonbonCart[0].quantity, 2);
 
   const checkoutItems = [
     cakeBrigadeiro1kg,

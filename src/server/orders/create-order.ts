@@ -7,12 +7,11 @@ const insertOrderSql = `
     customer_phone,
     requested_date,
     fulfillment_type,
-    delivery_address,
     notes,
     products_total_cents,
     status
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
 `;
 
 export async function createOrder(
@@ -24,7 +23,6 @@ export async function createOrder(
     order.customerPhone,
     order.requestedDate,
     order.fulfillmentType,
-    order.deliveryAddress,
     order.notes,
     order.productsTotalCents,
     pendingConfirmationStatus,

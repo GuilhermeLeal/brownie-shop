@@ -7,7 +7,6 @@ export type OrderDetails = {
   phone: string;
   desiredDate: string;
   fulfillmentMethod: FulfillmentMethod | "";
-  address: string;
   notes: string;
 };
 
@@ -15,8 +14,7 @@ export type OrderDetailsField =
   | "name"
   | "phone"
   | "desiredDate"
-  | "fulfillmentMethod"
-  | "address";
+  | "fulfillmentMethod";
 
 export type OrderDetailsErrors = Partial<
   Record<OrderDetailsField, string>

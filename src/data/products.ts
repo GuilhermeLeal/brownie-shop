@@ -107,6 +107,7 @@ export const products = [
     priceType: "fixed",
     priceInCents: 12000,
     image: "/images/demo/demo-bestseller-01.png",
+    flavors: BRIGADEIRO_FLAVORS,
   },
   {
     id: "super-brownie-de-pote",

@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
-import { useLocalToday } from "@/hooks/use-local-today";
 import {
   OrderSubmissionError,
   submitOrder,
@@ -24,10 +23,7 @@ export function OrderReview({ onBack }: OrderReviewProps) {
   const { orderDetails, completeOrder } = useCheckout();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const localToday = useLocalToday();
   const isDelivery = orderDetails.fulfillmentMethod === "delivery";
-  const isSameDay =
-    Boolean(localToday) && orderDetails.desiredDate === localToday;
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -46,10 +42,6 @@ export function OrderReview({ onBack }: OrderReviewProps) {
       customerPhone: orderDetails.phone,
       requestedDate: orderDetails.desiredDate,
       fulfillmentType: orderDetails.fulfillmentMethod,
-      deliveryAddress:
-        orderDetails.fulfillmentMethod === "delivery"
-          ? orderDetails.address
-          : undefined,
       notes: orderDetails.notes || undefined,
       items: items.map((item) => ({
         productId: item.productId,
@@ -79,18 +71,6 @@ export function OrderReview({ onBack }: OrderReviewProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-6 sm:px-6">
-        {isSameDay && (
-          <aside className="rounded-[1.5rem] bg-primary/25 p-4 ring-1 ring-primary/45">
-            <p className="font-heading text-lg font-bold">
-              Pedido para hoje — sujeito à disponibilidade
-            </p>
-            <p className="mt-1 text-sm leading-6 text-chocolate/75">
-              A disponibilidade dos produtos deverá ser confirmada com a
-              responsável pelo pedido.
-            </p>
-          </aside>
-        )}
-
         <section
           className="rounded-[1.5rem] bg-background p-5"
           aria-labelledby="review-client-title"
@@ -134,15 +114,12 @@ export function OrderReview({ onBack }: OrderReviewProps) {
               <dt className="font-semibold text-chocolate/55">Forma</dt>
               <dd className="mt-1">{isDelivery ? "Entrega" : "Retirada"}</dd>
             </div>
-            {isDelivery && (
-              <div>
-                <dt className="font-semibold text-chocolate/55">Endereço</dt>
-                <dd className="mt-1 whitespace-pre-line break-words">
-                  {orderDetails.address}
-                </dd>
-              </div>
-            )}
           </dl>
+          <p className="mt-4 border-t border-chocolate/10 pt-4 text-sm leading-6 text-chocolate/70">
+            {isDelivery
+              ? "A taxa e os detalhes da entrega serão combinados pelo WhatsApp. O custo da entrega é de responsabilidade do cliente."
+              : "O local e o horário da retirada serão combinados pelo WhatsApp."}
+          </p>
         </section>
 
         <section
@@ -204,12 +181,6 @@ export function OrderReview({ onBack }: OrderReviewProps) {
               {formatCurrency(totalInCents)}
             </p>
           </div>
-          {isDelivery && (
-            <p className="mt-3 border-t border-chocolate/10 pt-3 text-sm leading-6 text-chocolate/70">
-              A taxa de entrega não está incluída e é de responsabilidade do
-              cliente.
-            </p>
-          )}
         </section>
 
         {orderDetails.notes && (
