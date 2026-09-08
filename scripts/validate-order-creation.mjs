@@ -19,6 +19,9 @@ const vite = await createServer({
 });
 
 try {
+  const { createOrder } = await vite.ssrLoadModule(
+    "/src/server/orders/create-order.ts",
+  );
   const { OrderValidationError, validateCreateOrderPayload } =
     await vite.ssrLoadModule("/src/server/orders/validate-order.ts");
   const { getDateInputValueInTimeZone, getMinimumOrderDate } =
@@ -120,6 +123,69 @@ try {
   });
   assert.equal(filledBrownieBonbonNinhoNutella.productsTotalCents, 12000);
 
+  const superPotFlavors = [
+    "Ninho com Nutella",
+    "Brigadeiro",
+    "Brigadeiro branco",
+    "Ninho",
+    "Bem casado",
+  ];
+  const validatedSuperPotOrders = superPotFlavors.map((flavor) => {
+    const order = validate({
+      productsTotalCents: 1,
+      items: [
+        {
+          productId: "super-brownie-de-pote",
+          flavor,
+          unitPriceInCents: 1,
+          quantity: 1,
+        },
+      ],
+    });
+
+    assert.equal(order.productsTotalCents, 6000);
+    assert.equal(order.items[0].flavor, flavor);
+    assert.equal(order.items[0].unitPriceInCents, 6000);
+    return order;
+  });
+
+  const preparedStatements = [];
+  const fakeDatabase = {
+    prepare(sql) {
+      const statement = {
+        sql,
+        values: [],
+        bind(...values) {
+          this.values = values;
+          return this;
+        },
+      };
+
+      preparedStatements.push(statement);
+      return statement;
+    },
+    async batch() {
+      return [
+        { meta: { last_row_id: 321 } },
+        { meta: { changes: 1 } },
+      ];
+    },
+  };
+  const persistedSuperPotOrder = await createOrder(
+    fakeDatabase,
+    validatedSuperPotOrders[0],
+  );
+  assert.equal(persistedSuperPotOrder.orderId, 321);
+  assert.match(preparedStatements[1].sql, /INSERT INTO order_items/);
+  assert.deepEqual(preparedStatements[1].values, [
+    "super-brownie-de-pote",
+    "Super brownie de pote",
+    "Ninho com Nutella",
+    null,
+    1,
+    6000,
+  ]);
+
   const multipleProducts = validate({
     items: [
       { productId: "brownie-tradicional", quantity: 1 },
@@ -209,6 +275,18 @@ try {
     items: [
       {
         productId: "brownie-de-pote",
+        flavor: "Sabor inexistente",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [{ productId: "super-brownie-de-pote", quantity: 1 }],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "super-brownie-de-pote",
         flavor: "Sabor inexistente",
         quantity: 1,
       },

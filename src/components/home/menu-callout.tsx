@@ -32,12 +32,6 @@ export function MenuCallout() {
             >
               Ver cardápio completo
             </a>
-            <a
-              href="#cardapio"
-              className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-primary px-6 py-3 font-bold text-chocolate transition-colors hover:bg-chocolate hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-secondary sm:w-auto"
-            >
-              Fazer pedido
-            </a>
           </div>
         </div>
       </div>

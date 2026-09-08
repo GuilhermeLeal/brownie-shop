@@ -115,7 +115,6 @@ try {
     ],
     ["bombom-de-morango", "Bombom de morango", 1200],
     ["brownie-bits", "Brownie bits 100g", 1800],
-    ["super-brownie-de-pote", "Super brownie de pote", 6000],
   ];
 
   for (const [id, expectedName, expectedPrice] of fixedPriceExpectations) {
@@ -267,6 +266,44 @@ try {
   );
   assert.equal(bonbonCart.length, 1);
   assert.equal(bonbonCart[0].quantity, 2);
+
+  const superPotBrownie = getProduct("super-brownie-de-pote");
+  assert.deepEqual(getProductPricePresentation(superPotBrownie), {
+    kind: "fixed",
+    priceInCents: 6000,
+  });
+  assert.deepEqual(
+    superPotBrownie.flavors.map(({ name }) => name),
+    [
+      "Ninho com Nutella",
+      "Brigadeiro",
+      "Brigadeiro branco",
+      "Ninho",
+      "Bem casado",
+    ],
+  );
+  assert.equal(createCartItem(superPotBrownie), null);
+  assert.equal(
+    createCartItem(superPotBrownie, { flavor: "Sabor inexistente" }),
+    null,
+  );
+
+  const superPotItems = superPotBrownie.flavors.map(({ name }) => {
+    const item = createCartItem(superPotBrownie, { flavor: name });
+
+    assert.ok(item);
+    assert.equal(item.flavor, name);
+    assert.equal(item.unitPriceInCents, 6000);
+    return item;
+  });
+  assert.notEqual(superPotItems[1].id, superPotItems[3].id);
+
+  const superPotCart = addOrIncrementCartItem(
+    addOrIncrementCartItem([], superPotItems[3]),
+    createCartItem(superPotBrownie, { flavor: "Ninho" }),
+  );
+  assert.equal(superPotCart.length, 1);
+  assert.equal(superPotCart[0].quantity, 2);
 
   const checkoutItems = [
     cakeBrigadeiro1kg,

@@ -122,6 +122,7 @@ export const products = [
     priceType: "fixed",
     priceInCents: 6000,
     images: ["/images/products/super-brownie-pote.webp"],
+    flavors: BRIGADEIRO_FLAVORS,
   },
   {
     id: "rocambole-de-brownie",
