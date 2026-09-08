@@ -1,12 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { ProductMenuItem } from "@/components/home/product-menu-item";
-import { ExitOrderModal } from "@/components/order/exit-order-modal";
-import { useCart } from "@/contexts/cart-context";
-import { useCheckout } from "@/contexts/checkout-context";
-import { useOrderMode } from "@/contexts/order-mode-context";
 import { products } from "@/data/products";
 
 type ActiveProductSelection = {
@@ -16,12 +12,6 @@ type ActiveProductSelection = {
 };
 
 export function MenuSection() {
-  const { isOrderMode, stopOrderMode } = useOrderMode();
-  const { items, totalQuantity, clearCart, closeCart } = useCart();
-  const { resetCheckout } = useCheckout();
-  const exitOrderButtonRef = useRef<HTMLButtonElement>(null);
-  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
-  const [exitItemCount, setExitItemCount] = useState(0);
   const [activeProductSelection, setActiveProductSelection] =
     useState<ActiveProductSelection | null>(null);
 
@@ -67,27 +57,6 @@ export function MenuSection() {
     );
   }
 
-  function handleExitOrderMode() {
-    if (items.length === 0) {
-      setActiveProductSelection(null);
-      resetCheckout();
-      stopOrderMode();
-      return;
-    }
-
-    setExitItemCount(totalQuantity);
-    setIsExitModalOpen(true);
-  }
-
-  function handleConfirmExitOrderMode() {
-    clearCart();
-    closeCart();
-    resetCheckout();
-    setActiveProductSelection(null);
-    stopOrderMode();
-    setIsExitModalOpen(false);
-  }
-
   return (
     <section
       id="cardapio"
@@ -110,52 +79,12 @@ export function MenuSection() {
           </p>
         </div>
 
-        {isOrderMode && (
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-4 rounded-[2rem] bg-background px-5 py-5 ring-1 ring-chocolate/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="flex items-start gap-3" role="status">
-              <span
-                className="mt-1.5 size-2.5 shrink-0 rounded-full bg-primary"
-                aria-hidden="true"
-              />
-              <div>
-                <p className="font-heading text-xl font-bold">
-                  Montando seu pedido
-                </p>
-                <p className="mt-1 text-sm leading-6 text-chocolate/70">
-                  Escolha os produtos que deseja adicionar.
-                </p>
-              </div>
-            </div>
-            <button
-              ref={exitOrderButtonRef}
-              type="button"
-              onClick={handleExitOrderMode}
-              className="min-h-11 cursor-pointer self-start rounded-full px-4 py-2 text-sm font-bold underline decoration-chocolate/30 underline-offset-4 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate sm:self-auto"
-            >
-              Sair do modo pedido
-            </button>
-          </div>
-        )}
-
-        <ExitOrderModal
-          isOpen={isExitModalOpen}
-          itemCount={exitItemCount}
-          triggerRef={exitOrderButtonRef}
-          onCancel={() => setIsExitModalOpen(false)}
-          onConfirm={handleConfirmExitOrderMode}
-        />
-
-        <ol
-          className={`space-y-8 sm:space-y-10 lg:space-y-12 ${
-            isOrderMode ? "mt-8 sm:mt-10" : "mt-12 sm:mt-16 lg:mt-20"
-          }`}
-        >
+        <ol className="mt-12 space-y-8 sm:mt-16 sm:space-y-10 lg:mt-20 lg:space-y-12">
           {products.map((product, index) => (
             <li key={product.id}>
               <ProductMenuItem
                 product={product}
                 index={index}
-                isOrderMode={isOrderMode}
                 selectedFlavor={
                   activeProductSelection?.productId === product.id
                     ? (activeProductSelection.flavor ?? null)

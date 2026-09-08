@@ -43,6 +43,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 @utility site-container {
   width: 100%;
   max-width: 75rem;
@@ -195,7 +201,7 @@
   }
 }
 
-@keyframes exit-order-overlay-in {
+@keyframes confirmation-overlay-in {
   from {
     opacity: 0;
   }
@@ -205,7 +211,7 @@
   }
 }
 
-@keyframes exit-order-overlay-out {
+@keyframes confirmation-overlay-out {
   from {
     opacity: 1;
   }
@@ -215,7 +221,7 @@
   }
 }
 
-@keyframes exit-order-modal-in {
+@keyframes confirmation-modal-in {
   from {
     opacity: 0;
     transform: scale(0.96) translateY(0.5rem);
@@ -227,7 +233,7 @@
   }
 }
 
-@keyframes exit-order-modal-out {
+@keyframes confirmation-modal-out {
   from {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -239,7 +245,7 @@
   }
 }
 
-@keyframes exit-order-modal-fade-in {
+@keyframes confirmation-modal-fade-in {
   from {
     opacity: 0;
   }
@@ -249,63 +255,31 @@
   }
 }
 
-@keyframes exit-order-modal-fade-out {
+@keyframes confirmation-modal-fade-out {
   from {
     opacity: 1;
   }
 
   to {
     opacity: 0;
-  }
-}
-
-.exit-order-dialog[data-state="open"]::backdrop {
-  animation: exit-order-overlay-in 220ms ease-out forwards;
-}
-
-.exit-order-dialog[data-state="closing"]::backdrop {
-  animation: exit-order-overlay-out 200ms ease-in forwards;
-}
-
-.exit-order-dialog[data-state="open"] .exit-order-modal {
-  animation: exit-order-modal-in 220ms ease-out forwards;
-}
-
-.exit-order-dialog[data-state="closing"] .exit-order-modal {
-  pointer-events: none;
-  animation: exit-order-modal-out 200ms ease-in forwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .exit-order-dialog[data-state="open"]::backdrop,
-  .exit-order-dialog[data-state="closing"]::backdrop {
-    animation-duration: 1ms;
-  }
-
-  .exit-order-dialog[data-state="open"] .exit-order-modal {
-    animation: exit-order-modal-fade-in 1ms linear forwards;
-  }
-
-  .exit-order-dialog[data-state="closing"] .exit-order-modal {
-    animation: exit-order-modal-fade-out 1ms linear forwards;
   }
 }
 
 .clear-cart-dialog[data-state="open"]::backdrop {
-  animation: exit-order-overlay-in 220ms ease-out forwards;
+  animation: confirmation-overlay-in 220ms ease-out forwards;
 }
 
 .clear-cart-dialog[data-state="closing"]::backdrop {
-  animation: exit-order-overlay-out 200ms ease-in forwards;
+  animation: confirmation-overlay-out 200ms ease-in forwards;
 }
 
 .clear-cart-dialog[data-state="open"] .clear-cart-modal {
-  animation: exit-order-modal-in 220ms ease-out forwards;
+  animation: confirmation-modal-in 220ms ease-out forwards;
 }
 
 .clear-cart-dialog[data-state="closing"] .clear-cart-modal {
   pointer-events: none;
-  animation: exit-order-modal-out 200ms ease-in forwards;
+  animation: confirmation-modal-out 200ms ease-in forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -315,10 +289,10 @@
   }
 
   .clear-cart-dialog[data-state="open"] .clear-cart-modal {
-    animation: exit-order-modal-fade-in 1ms linear forwards;
+    animation: confirmation-modal-fade-in 1ms linear forwards;
   }
 
   .clear-cart-dialog[data-state="closing"] .clear-cart-modal {
-    animation: exit-order-modal-fade-out 1ms linear forwards;
+    animation: confirmation-modal-fade-out 1ms linear forwards;
   }
 }

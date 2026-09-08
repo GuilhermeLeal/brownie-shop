@@ -130,7 +130,7 @@ export function CartDrawer() {
         <header className="flex items-start justify-between gap-4 border-b border-chocolate/10 px-5 py-5 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-chocolate/55">
-              Modo pedido · Etapa {stepNumbers[activeStep]} de 4
+              Etapa {stepNumbers[activeStep]} de 4
             </p>
             <h2
               ref={titleRef}

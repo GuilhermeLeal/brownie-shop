@@ -14,7 +14,6 @@ import {
 type ProductMenuItemProps = {
   product: Product;
   index: number;
-  isOrderMode: boolean;
   selectedFlavor: string | null;
   selectedSize: string | null;
   onFlavorToggle: (productId: string, flavor: string) => void;
@@ -26,7 +25,6 @@ type ProductMenuItemProps = {
 export function ProductMenuItem({
   product,
   index,
-  isOrderMode,
   selectedFlavor,
   selectedSize,
   onFlavorToggle,
@@ -56,11 +54,10 @@ export function ProductMenuItem({
       : `${
           pricePresentation.kind === "starting-at" ? "A partir de " : ""
         }${formatCurrency(pricePresentation.priceInCents)}`;
-  const hasSelectableFlavors =
-    isOrderMode && product.priceType !== "consult";
+  const hasSelectableFlavors = product.priceType !== "consult";
   const sizeOptions =
     product.priceType === "by-size" ? product.sizes : undefined;
-  const hasSelectableSizes = isOrderMode && Boolean(sizeOptions?.length);
+  const hasSelectableSizes = Boolean(sizeOptions?.length);
 
   useEffect(() => {
     return () => {
@@ -289,26 +286,25 @@ export function ProductMenuItem({
           </div>
         )}
 
-        {isOrderMode &&
-          (product.priceType === "consult" ? (
-            <p className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white/65 px-6 py-3 font-bold text-chocolate/75 ring-1 ring-chocolate/10 sm:w-auto">
-              Valor sob consulta
-            </p>
-          ) : (
-            <button
-              type="button"
-              onClick={handleAddProduct}
-              className={`mt-7 inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full px-6 py-3 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto ${
-                wasAdded
-                  ? "bg-white text-chocolate ring-1 ring-chocolate/15"
-                  : "bg-chocolate text-white hover:bg-white hover:text-chocolate"
-              }`}
-            >
-              <span aria-live="polite">
-                {wasAdded ? "Adicionado ✓" : "Adicionar ao pedido"}
-              </span>
-            </button>
-          ))}
+        {product.priceType === "consult" ? (
+          <p className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white/65 px-6 py-3 font-bold text-chocolate/75 ring-1 ring-chocolate/10 sm:w-auto">
+            Valor sob consulta
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAddProduct}
+            className={`mt-7 inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full px-6 py-3 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto ${
+              wasAdded
+                ? "bg-white text-chocolate ring-1 ring-chocolate/15"
+                : "bg-chocolate text-white hover:bg-white hover:text-chocolate"
+            }`}
+          >
+            <span aria-live="polite">
+              {wasAdded ? "Adicionado ✓" : "Adicionar ao pedido"}
+            </span>
+          </button>
+        )}
       </div>
     </article>
   );

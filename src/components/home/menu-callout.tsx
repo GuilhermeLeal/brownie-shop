@@ -1,10 +1,4 @@
-"use client";
-
-import { useOrderMode } from "@/contexts/order-mode-context";
-
 export function MenuCallout() {
-  const { isOrderMode, startOrderMode } = useOrderMode();
-
   return (
     <section
       className="site-container py-20 sm:py-24 lg:py-28"
@@ -38,13 +32,12 @@ export function MenuCallout() {
             >
               Ver cardápio completo
             </a>
-            <button
-              type="button"
-              onClick={startOrderMode}
+            <a
+              href="#cardapio"
               className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-primary px-6 py-3 font-bold text-chocolate transition-colors hover:bg-chocolate hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 focus-visible:ring-offset-secondary sm:w-auto"
             >
-              {isOrderMode ? "Continuar pedido" : "Fazer pedido"}
-            </button>
+              Fazer pedido
+            </a>
           </div>
         </div>
       </div>

@@ -3,7 +3,6 @@ import { Figtree, Gabarito } from "next/font/google";
 
 import { CartProvider } from "@/contexts/cart-context";
 import { CheckoutProvider } from "@/contexts/checkout-context";
-import { OrderModeProvider } from "@/contexts/order-mode-context";
 
 import "./globals.css";
 
@@ -30,11 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className={`${figtree.variable} ${gabarito.variable}`}>
       <body>
-        <OrderModeProvider>
-          <CartProvider>
-            <CheckoutProvider>{children}</CheckoutProvider>
-          </CartProvider>
-        </OrderModeProvider>
+        <CartProvider>
+          <CheckoutProvider>{children}</CheckoutProvider>
+        </CartProvider>
       </body>
     </html>
   );

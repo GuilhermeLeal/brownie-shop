@@ -3,13 +3,11 @@
 import { useEffect, useState } from "react";
 
 import { useCart } from "@/contexts/cart-context";
-import { useOrderMode } from "@/contexts/order-mode-context";
 
 export function FloatingCartButton() {
-  const { isOrderMode } = useOrderMode();
   const { totalQuantity, openCart } = useCart();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const shouldShowButton = isOrderMode && !isHeaderVisible;
+  const shouldShowButton = !isHeaderVisible;
 
   useEffect(() => {
     const siteHeader = document.querySelector<HTMLElement>("body > header");
