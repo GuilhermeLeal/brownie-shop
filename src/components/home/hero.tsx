@@ -1,7 +1,6 @@
 import Image from "next/image";
 
-// Imagem temporária: substitua este caminho pela fotografia final do Hero.
-const heroImage = "/images/demo/demo-hero-brownies.png";
+const gabiImage = "/images/gabi-leal.webp";
 
 export function Hero() {
   return (
@@ -10,20 +9,26 @@ export function Hero() {
       className="site-container scroll-mt-6 pb-20 pt-8 sm:pb-24 sm:pt-12 lg:pb-32 lg:pt-16"
       aria-labelledby="hero-title"
     >
-      <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+      <div
+        id="sobre"
+        className="grid scroll-mt-6 items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16"
+      >
         <div className="max-w-xl">
           <p className="inline-flex rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-chocolate shadow-sm ring-1 ring-chocolate/5">
-            Brownies artesanais
+            SOBRE A BROWNIERIA
           </p>
           <h1
             id="hero-title"
             className="mt-6 text-balance font-heading text-5xl font-bold leading-[0.98] tracking-[-0.035em] sm:text-6xl lg:text-7xl"
           >
-            Carinho em cada pedaço.
+            Por trás de cada brownie.
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-base leading-7 text-chocolate/75 sm:text-lg sm:leading-8">
-            Texto provisório para apresentar brownies feitos de forma artesanal,
-            com cuidado nos detalhes e sabor para deixar o dia mais doce.
+            Por trás da Brownieria Gabi Leal está a Gabi, que prepara cada
+            brownie de forma artesanal e com cuidado em cada detalhe. A ideia é
+            entregar aquele brownie com casquinha crocante por fora, macio e
+            cremoso por dentro, feito para deixar qualquer momento um pouco mais
+            gostoso.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -36,23 +41,20 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative isolate mx-auto w-full max-w-xl">
+        <div className="relative isolate mx-auto w-full max-w-xl lg:mr-5 lg:max-w-[31.5rem]">
           <div
-            className="absolute -inset-3 -z-10 rounded-[2.75rem] bg-secondary/30 sm:-inset-5"
+            className="absolute -inset-3 -z-10 rounded-[2.75rem] bg-primary sm:-inset-5"
             aria-hidden="true"
           />
           <figure className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-secondary/20">
             <Image
-              src={heroImage}
-              alt="Imagem temporária de brownies artesanais empilhados em um prato claro."
+              src={gabiImage}
+              alt="Gabi Leal, responsável pela Brownieria Gabi Leal"
               fill
               sizes="(min-width: 1024px) 52vw, 100vw"
-              className="object-cover"
+              className="object-cover object-[52%_center]"
               preload
             />
-            <figcaption className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur-sm">
-              Imagem de demonstração
-            </figcaption>
           </figure>
         </div>
       </div>

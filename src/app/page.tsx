@@ -1,4 +1,3 @@
-import { AboutOwner } from "@/components/home/about-owner";
 import { BestSellers } from "@/components/home/best-sellers";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { FloatingCartButton } from "@/components/cart/floating-cart-button";
@@ -19,7 +18,6 @@ export default function Home() {
         <BestSellers />
         <MenuCallout />
         <MenuSection />
-        <AboutOwner />
       </main>
       <Footer />
     </>
