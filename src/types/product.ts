@@ -13,15 +13,17 @@ export type PricedProductFlavor = ProductFlavor & {
   priceInCents: number;
 };
 
-export type ProductSizeOption = {
+type ProductSizeBase = {
   value: string;
   label: string;
+  isApproximate?: boolean;
+};
+
+export type ProductSizeOption = ProductSizeBase & {
   priceInCents: number;
 };
 
-export type FlavorPricedProductSizeOption = {
-  value: string;
-  label: string;
+export type FlavorPricedProductSizeOption = ProductSizeBase & {
   flavorPrices: readonly PricedProductFlavor[];
 };
 

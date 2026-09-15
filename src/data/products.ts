@@ -9,14 +9,17 @@ const FLAVOR_NAMES = [
 ] as const;
 
 const BRIGADEIRO_FLAVORS = FLAVOR_NAMES.map((name) => ({ name }));
+const BRIGADEIRO_FLAVORS_WITH_PRESTIGIO = [
+  ...BRIGADEIRO_FLAVORS,
+  { name: "Prestígio" as const },
+];
 
-type BrigadeiroFlavorName = (typeof FLAVOR_NAMES)[number];
-
-function createBrigadeiroFlavorPrices(
+function createFlavorPrices<const FlavorName extends string>(
+  flavors: readonly { name: FlavorName }[],
   defaultPriceInCents: number,
-  overrides: Partial<Record<BrigadeiroFlavorName, number>> = {},
+  overrides: Partial<Record<FlavorName, number>> = {},
 ) {
-  return BRIGADEIRO_FLAVORS.map(({ name }) => ({
+  return flavors.map(({ name }) => ({
     name,
     priceInCents: overrides[name] ?? defaultPriceInCents,
   }));
@@ -26,21 +29,43 @@ const BROWNIE_POT_SIZES = [
   {
     value: "300g",
     label: "300 g",
-    flavorPrices: createBrigadeiroFlavorPrices(1700, {
+    isApproximate: true,
+    flavorPrices: createFlavorPrices(BRIGADEIRO_FLAVORS, 1700, {
       "Ninho com Nutella": 1800,
     }),
   },
   {
     value: "800g",
     label: "800 g",
-    flavorPrices: createBrigadeiroFlavorPrices(6000),
+    isApproximate: true,
+    flavorPrices: createFlavorPrices(BRIGADEIRO_FLAVORS, 6000, {
+      "Ninho com Nutella": 7000,
+    }),
   },
 ] as const;
 
 const BROWNIE_CAKE_SIZES = [
-  { value: "1kg", label: "1 kg", priceInCents: 10000 },
-  { value: "2kg", label: "2 kg", priceInCents: 15000 },
-  { value: "3kg", label: "3 kg", priceInCents: 20000 },
+  {
+    value: "1kg",
+    label: "1 kg",
+    flavorPrices: createFlavorPrices(BRIGADEIRO_FLAVORS, 10000, {
+      "Ninho com Nutella": 11000,
+    }),
+  },
+  {
+    value: "2kg",
+    label: "2 kg",
+    flavorPrices: createFlavorPrices(BRIGADEIRO_FLAVORS, 15000, {
+      "Ninho com Nutella": 16000,
+    }),
+  },
+  {
+    value: "3kg",
+    label: "3 kg",
+    flavorPrices: createFlavorPrices(BRIGADEIRO_FLAVORS, 20000, {
+      "Ninho com Nutella": 21000,
+    }),
+  },
 ] as const;
 
 // Caminhos definitivos: substitua os arquivos em public/images/products pelas
@@ -100,7 +125,7 @@ export const products = [
     name: "Bolo de brownie",
     description:
       "Bolo feito com massa de brownie, recheado com brigadeiro à sua escolha e finalizado de forma artesanal. Disponível em diferentes tamanhos.",
-    priceType: "by-size",
+    priceType: "by-size-and-flavor",
     images: [
       "/images/products/bolo-brownie-1.webp",
       "/images/products/bolo-brownie-2.webp",
@@ -115,14 +140,14 @@ export const products = [
     description:
       "Morango fresquinho coberto com brigadeiro branco e banhado em chocolate 50%.",
     priceType: "fixed",
-    priceInCents: 1200,
+    priceInCents: 1000,
     images: ["/images/products/bombom-morango.webp"],
   },
   {
     id: "brownie-bits",
     name: "Brownie bits 100g",
     description:
-      "Mini brownies em cubos, banhados em chocolate 50%. Aproximadamente 100 g.",
+      "Mini brownies em cubos, banhados em chocolate 50%. ± 100 g.",
     priceType: "fixed",
     priceInCents: 1800,
     images: ["/images/products/brownie-bits.webp"],
@@ -131,23 +156,27 @@ export const products = [
     id: "bombom-de-brownie",
     name: "Bombom de brownie com recheio",
     description:
-      "Casquinha de chocolate 50% recheada com cubos de brownie e brigadeiro à sua escolha. Aproximadamente 1,5 kg.",
-    priceType: "fixed",
-    priceInCents: 12000,
+      "Casquinha de chocolate 50% recheada com cubos de brownie e brigadeiro à sua escolha. ± 1,5 kg.",
+    priceType: "by-flavor",
     images: [
       "/images/products/bombom-brownie-1.webp",
       "/images/products/bombom-brownie-2.webp",
     ],
-    flavors: BRIGADEIRO_FLAVORS,
+    flavors: createFlavorPrices(
+      BRIGADEIRO_FLAVORS_WITH_PRESTIGIO,
+      12000,
+      { "Ninho com Nutella": 13000 },
+    ),
   },
   {
     id: "rocambole-de-brownie",
     name: "Rocambole de brownie",
     description:
-      "Massa de brownie enrolada com recheio de brigadeiro à sua escolha e banhada em chocolate 50%. Aproximadamente 800 g.",
-    priceType: "fixed",
-    priceInCents: 9000,
+      "Massa de brownie enrolada com recheio de brigadeiro à sua escolha e banhada em chocolate 50%. ± 800 g.",
+    priceType: "by-flavor",
     images: ["/images/products/rocambole-brownie.webp"],
-    flavors: BRIGADEIRO_FLAVORS,
+    flavors: createFlavorPrices(BRIGADEIRO_FLAVORS_WITH_PRESTIGIO, 9000, {
+      "Ninho com Nutella": 10000,
+    }),
   },
 ] satisfies readonly Product[];

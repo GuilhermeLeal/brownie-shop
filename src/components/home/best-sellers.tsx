@@ -1,9 +1,6 @@
 import Image from "next/image";
 
 import { products } from "@/data/products";
-import type { Product } from "@/types/product";
-import { formatCurrency } from "@/utils/format-currency";
-import { getProductPricePresentation } from "@/utils/product-price";
 
 const bestSellerIds = [
   "brownie-tradicional",
@@ -21,20 +18,6 @@ const bestSellers = bestSellerIds.map((productId) => {
 
   return { product, image };
 });
-
-function getPriceLabel(product: Product) {
-  const price = getProductPricePresentation(product);
-
-  if (price.kind === "consult") {
-    return "Consultar valor";
-  }
-
-  const formattedPrice = formatCurrency(price.priceInCents);
-
-  return price.kind === "starting-at"
-    ? `A partir de ${formattedPrice}`
-    : formattedPrice;
-}
 
 export function BestSellers() {
   return (
@@ -72,17 +55,12 @@ export function BestSellers() {
                 />
               </figure>
 
-              <div className="mt-5 flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-heading text-2xl font-bold leading-tight">
-                    {product.name}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-chocolate/65">
-                    {product.description}
-                  </p>
-                </div>
-                <p className="shrink-0 rounded-full bg-background px-3 py-2 text-sm font-bold">
-                  {getPriceLabel(product)}
+              <div className="mt-5">
+                <h3 className="font-heading text-2xl font-bold leading-tight">
+                  {product.name}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-chocolate/65">
+                  {product.description}
                 </p>
               </div>
             </article>

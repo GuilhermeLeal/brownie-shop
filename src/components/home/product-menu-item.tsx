@@ -9,6 +9,7 @@ import { formatCurrency } from "@/utils/format-currency";
 import {
   getFlavorPriceInCents,
   getProductPricePresentation,
+  getProductSizeDisplayLabel,
   resolveProductSelection,
 } from "@/utils/product-price";
 
@@ -48,13 +49,10 @@ export function ProductMenuItem({
   const desktopColumns = imageOnRight
     ? "md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"
     : "md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]";
-  const selectedCombination =
-    product.priceType === "by-size-and-flavor"
-      ? resolveProductSelection(product, {
-          flavor: selectedFlavor ?? undefined,
-          size: selectedSize ?? undefined,
-        })
-      : null;
+  const selectedCombination = resolveProductSelection(product, {
+    flavor: selectedFlavor ?? undefined,
+    size: selectedSize ?? undefined,
+  });
   const pricePresentation = selectedCombination
     ? {
         kind: "fixed" as const,
@@ -155,9 +153,17 @@ export function ProductMenuItem({
   }
 
   function getSizeLabel(size: NonNullable<typeof sizeOptions>[number]) {
-    return "priceInCents" in size
-      ? `${size.label} — ${formatCurrency(size.priceInCents)}`
-      : size.label;
+    const displayLabel = getProductSizeDisplayLabel(size);
+
+    if ("priceInCents" in size) {
+      return `${displayLabel} — ${formatCurrency(size.priceInCents)}`;
+    }
+
+    const lowestFlavorPrice = Math.min(
+      ...size.flavorPrices.map(({ priceInCents }) => priceInCents),
+    );
+
+    return `${displayLabel} — a partir de ${formatCurrency(lowestFlavorPrice)}`;
   }
 
   return (

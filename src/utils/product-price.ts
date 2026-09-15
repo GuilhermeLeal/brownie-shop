@@ -10,6 +10,7 @@ export type ResolvedProductSelection = {
   size?: {
     value: string;
     label: string;
+    isApproximate?: boolean;
   };
   unitPriceInCents: number;
 };
@@ -21,6 +22,13 @@ export type ProductSelection = {
 
 function normalizeFlavor(flavor?: string) {
   return flavor?.trim() || undefined;
+}
+
+export function getProductSizeDisplayLabel(size: {
+  label: string;
+  isApproximate?: boolean;
+}) {
+  return `${size.isApproximate ? "± " : ""}${size.label}`;
 }
 
 export function getProductPricePresentation(
@@ -124,7 +132,11 @@ export function resolveProductSelection(
     return flavor && size && price
       ? {
           flavor: flavor.name,
-          size: { value: size.value, label: size.label },
+          size: {
+            value: size.value,
+            label: size.label,
+            isApproximate: size.isApproximate,
+          },
           unitPriceInCents: price.priceInCents,
         }
       : null;
@@ -144,7 +156,11 @@ export function resolveProductSelection(
     return size
       ? {
           flavor: flavor?.name,
-          size: { value: size.value, label: size.label },
+          size: {
+            value: size.value,
+            label: size.label,
+            isApproximate: size.isApproximate,
+          },
           unitPriceInCents: size.priceInCents,
         }
       : null;

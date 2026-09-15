@@ -113,8 +113,15 @@ try {
       return order;
     },
   );
-  const validatedPotOrders800g = [...potFlavorPrices300g.keys()].map(
-    (flavor) => {
+  const potFlavorPrices800g = new Map([
+    ["Ninho com Nutella", 7000],
+    ["Brigadeiro", 6000],
+    ["Brigadeiro branco", 6000],
+    ["Ninho", 6000],
+    ["Bem casado", 6000],
+  ]);
+  const validatedPotOrders800g = [...potFlavorPrices800g].map(
+    ([flavor, expectedPrice]) => {
       const order = validate({
         productsTotalCents: 1,
         items: [
@@ -128,10 +135,10 @@ try {
         ],
       });
 
-      assert.equal(order.productsTotalCents, 6000);
+      assert.equal(order.productsTotalCents, expectedPrice);
       assert.equal(order.items[0].flavor, flavor);
       assert.equal(order.items[0].size, "800 g");
-      assert.equal(order.items[0].unitPriceInCents, 6000);
+      assert.equal(order.items[0].unitPriceInCents, expectedPrice);
       return order;
     },
   );
@@ -175,9 +182,28 @@ try {
       },
     ],
   });
-  assert.equal(brownieCake.productsTotalCents, 20000);
+  assert.equal(brownieCake.productsTotalCents, 21000);
   assert.equal(brownieCake.items[0].flavor, "Ninho com Nutella");
   assert.equal(brownieCake.items[0].size, "3 kg");
+  for (const [size, expectedPrice] of [
+    ["1kg", 11000],
+    ["2kg", 16000],
+    ["3kg", 21000],
+  ]) {
+    const order = validate({
+      items: [
+        {
+          productId: "bolo-de-brownie",
+          flavor: "Ninho com Nutella",
+          size,
+          quantity: 1,
+        },
+      ],
+    });
+
+    assert.equal(order.productsTotalCents, expectedPrice);
+    assert.equal(order.items[0].unitPriceInCents, expectedPrice);
+  }
 
   const filledBrownieBonbon = validate({
     productsTotalCents: 1,
@@ -203,7 +229,45 @@ try {
       },
     ],
   });
-  assert.equal(filledBrownieBonbonNinhoNutella.productsTotalCents, 12000);
+  assert.equal(filledBrownieBonbonNinhoNutella.productsTotalCents, 13000);
+
+  const filledBrownieBonbonPrestigio = validate({
+    items: [
+      {
+        productId: "bombom-de-brownie",
+        flavor: "Prestígio",
+        quantity: 1,
+      },
+    ],
+  });
+  assert.equal(filledBrownieBonbonPrestigio.productsTotalCents, 12000);
+  assert.equal(filledBrownieBonbonPrestigio.items[0].flavor, "Prestígio");
+
+  const brownieRollNinhoNutella = validate({
+    items: [
+      {
+        productId: "rocambole-de-brownie",
+        flavor: "Ninho com Nutella",
+        quantity: 1,
+      },
+    ],
+  });
+  const brownieRollPrestigio = validate({
+    items: [
+      {
+        productId: "rocambole-de-brownie",
+        flavor: "Prestígio",
+        quantity: 1,
+      },
+    ],
+  });
+  assert.equal(brownieRollNinhoNutella.productsTotalCents, 10000);
+  assert.equal(brownieRollPrestigio.productsTotalCents, 9000);
+
+  const strawberryBonbon = validate({
+    items: [{ productId: "bombom-de-morango", quantity: 1 }],
+  });
+  assert.equal(strawberryBonbon.productsTotalCents, 1000);
 
   const preparedStatements = [];
   const fakeDatabase = {
@@ -239,7 +303,19 @@ try {
     "Ninho com Nutella",
     "800 g",
     1,
-    6000,
+    7000,
+  ]);
+
+  preparedStatements.length = 0;
+  await createOrder(fakeDatabase, filledBrownieBonbonPrestigio);
+  assert.match(preparedStatements[1].sql, /INSERT INTO order_items/);
+  assert.deepEqual(preparedStatements[1].values, [
+    "bombom-de-brownie",
+    "Bombom de brownie com recheio",
+    "Prestígio",
+    null,
+    1,
+    12000,
   ]);
 
   const multipleProducts = validate({
@@ -360,6 +436,16 @@ try {
     items: [
       {
         productId: "brownie-de-pote",
+        flavor: "Prestígio",
+        size: "300g",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "brownie-de-pote",
         flavor: "Brigadeiro",
         size: "tamanho-inexistente",
         quantity: 1,
@@ -384,8 +470,27 @@ try {
   expectInvalid({
     items: [
       {
+        productId: "rocambole-de-brownie",
+        flavor: "Sabor inexistente",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
         productId: "bolo-de-brownie",
         flavor: "Brigadeiro",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "bolo-de-brownie",
+        flavor: "Prestígio",
+        size: "1kg",
         quantity: 1,
       },
     ],

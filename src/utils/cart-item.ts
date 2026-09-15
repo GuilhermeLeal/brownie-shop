@@ -1,6 +1,7 @@
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
 import {
+  getProductSizeDisplayLabel,
   resolveProductSelection,
   type ProductSelection,
 } from "@/utils/product-price";
@@ -58,5 +59,9 @@ export function addOrIncrementCartItem(
 }
 
 export function getCartItemVariantLabel(item: CartItem) {
-  return [item.flavor, item.size?.label].filter(Boolean).join(" • ") || null;
+  const sizeLabel = item.size
+    ? getProductSizeDisplayLabel(item.size)
+    : undefined;
+
+  return [item.flavor, sizeLabel].filter(Boolean).join(" • ") || null;
 }

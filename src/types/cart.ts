@@ -8,5 +8,6 @@ export type CartItem = {
   size?: {
     value: string;
     label: string;
+    isApproximate?: boolean;
   };
 };
