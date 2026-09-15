@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { products } from "@/data/products";
+import { formatApproximateWeight } from "@/utils/format-weight";
 
 const bestSellerIds = [
   "brownie-tradicional",
@@ -43,28 +44,35 @@ export function BestSellers() {
         </div>
 
         <div className="mt-10 grid gap-10 md:grid-cols-3 md:gap-6 lg:gap-8">
-          {bestSellers.map(({ product, image }) => (
-            <article key={product.id}>
-              <figure className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-primary/20">
-                <Image
-                  src={image}
-                  alt={`Foto de ${product.name}`}
-                  fill
-                  sizes="(min-width: 1200px) 360px, (min-width: 768px) 33vw, 100vw"
-                  className="object-cover transition-transform duration-500 hover:scale-[1.02]"
-                />
-              </figure>
+          {bestSellers.map(({ product, image }) => {
+            const productDisplayName = formatApproximateWeight(product.name);
+            const productDisplayDescription = formatApproximateWeight(
+              product.description,
+            );
 
-              <div className="mt-5">
-                <h3 className="font-heading text-2xl font-bold leading-tight">
-                  {product.name}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-chocolate/65">
-                  {product.description}
-                </p>
-              </div>
-            </article>
-          ))}
+            return (
+              <article key={product.id}>
+                <figure className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-primary/20">
+                  <Image
+                    src={image}
+                    alt={`Foto de ${productDisplayName}`}
+                    fill
+                    sizes="(min-width: 1200px) 360px, (min-width: 768px) 33vw, 100vw"
+                    className="object-cover transition-transform duration-500 hover:scale-[1.02]"
+                  />
+                </figure>
+
+                <div className="mt-5">
+                  <h3 className="font-heading text-2xl font-bold leading-tight">
+                    {productDisplayName}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-chocolate/65">
+                    {productDisplayDescription}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

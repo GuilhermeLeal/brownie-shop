@@ -12,6 +12,7 @@ import type { CreateOrderInput } from "@/types/order";
 import { getCartItemVariantLabel } from "@/utils/cart-item";
 import { formatCurrency } from "@/utils/format-currency";
 import { formatDateInputValue } from "@/utils/date";
+import { formatApproximateWeight } from "@/utils/format-weight";
 import { formatPhone } from "@/utils/phone";
 
 type OrderReviewProps = {
@@ -140,12 +141,13 @@ export function OrderReview({ onBack }: OrderReviewProps) {
           <ul className="mt-4 divide-y divide-chocolate/10">
             {items.map((item) => {
               const variantLabel = getCartItemVariantLabel(item);
+              const itemDisplayName = formatApproximateWeight(item.name);
 
               return (
                 <li key={item.id} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-bold">{item.name}</p>
+                      <p className="font-bold">{itemDisplayName}</p>
                       {variantLabel && (
                         <p className="mt-1 text-sm text-chocolate/60">
                           {variantLabel}
@@ -235,7 +237,7 @@ export function OrderReview({ onBack }: OrderReviewProps) {
             role="alert"
             className="mt-3 rounded-2xl bg-primary/20 px-4 py-3 text-sm font-semibold leading-6"
           >
-            {submissionError}
+            {formatApproximateWeight(submissionError)}
           </p>
         )}
       </footer>

@@ -6,6 +6,7 @@ import { ProductImageCarousel } from "@/components/home/product-image-carousel";
 import { useCart } from "@/contexts/cart-context";
 import type { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/format-currency";
+import { formatApproximateWeight } from "@/utils/format-weight";
 import {
   getFlavorPriceInCents,
   getProductPricePresentation,
@@ -72,6 +73,10 @@ export function ProductMenuItem({
       ? product.sizes
       : undefined;
   const hasSelectableSizes = Boolean(sizeOptions?.length);
+  const productDisplayName = formatApproximateWeight(product.name);
+  const productDisplayDescription = formatApproximateWeight(
+    product.description,
+  );
 
   useEffect(() => {
     return () => {
@@ -172,7 +177,7 @@ export function ProductMenuItem({
     >
       <ProductImageCarousel
         images={product.images}
-        productName={product.name}
+        productName={productDisplayName}
         className={`${
           imageOnRight ? "md:order-2" : "md:order-1"
         }`}
@@ -187,10 +192,10 @@ export function ProductMenuItem({
           Item {itemNumber}
         </p>
         <h3 className="mt-3 text-balance font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-          {product.name}
+          {productDisplayName}
         </h3>
         <p className="mt-4 text-pretty leading-7 text-chocolate/70">
-          {product.description}
+          {productDisplayDescription}
         </p>
         <p className="mt-5 text-lg font-bold">
           {productPriceLabel}
@@ -237,7 +242,7 @@ export function ProductMenuItem({
                 <p className="text-sm font-bold">Sabores</p>
                 <ul
                   className="mt-3 flex flex-wrap gap-2"
-                  aria-label={`Sabores de ${product.name}`}
+                  aria-label={`Sabores de ${productDisplayName}`}
                 >
                   {product.flavors.map((flavor) => (
                     <li
@@ -301,7 +306,7 @@ export function ProductMenuItem({
                 <p className="text-sm font-bold">Tamanhos</p>
                 <ul
                   className="mt-3 flex flex-wrap gap-2"
-                  aria-label={`Tamanhos de ${product.name}`}
+                  aria-label={`Tamanhos de ${productDisplayName}`}
                 >
                   {sizeOptions.map((size) => (
                     <li

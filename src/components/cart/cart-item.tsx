@@ -6,12 +6,14 @@ import { useCart } from "@/contexts/cart-context";
 import type { CartItem as CartItemType } from "@/types/cart";
 import { getCartItemVariantLabel } from "@/utils/cart-item";
 import { formatCurrency } from "@/utils/format-currency";
+import { formatApproximateWeight } from "@/utils/format-weight";
 
 export function CartItem({ item }: { item: CartItemType }) {
   const { increaseQuantity, decreaseQuantity, removeItem } = useCart();
   const [isRemoving, setIsRemoving] = useState(false);
   const subtotalInCents = item.unitPriceInCents * item.quantity;
   const variantLabel = getCartItemVariantLabel(item);
+  const itemDisplayName = formatApproximateWeight(item.name);
 
   function requestRemoval() {
     if (!isRemoving) {
@@ -42,7 +44,7 @@ export function CartItem({ item }: { item: CartItemType }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="font-heading text-lg font-bold leading-tight">
-              {item.name}
+              {itemDisplayName}
             </h3>
             {variantLabel && (
               <p className="mt-1 text-sm text-chocolate/65">
@@ -62,7 +64,7 @@ export function CartItem({ item }: { item: CartItemType }) {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div
             className="inline-flex items-center rounded-full bg-white p-1 ring-1 ring-chocolate/10"
-            aria-label={`Quantidade de ${item.name}`}
+            aria-label={`Quantidade de ${itemDisplayName}`}
           >
             <button
               type="button"
@@ -71,8 +73,8 @@ export function CartItem({ item }: { item: CartItemType }) {
               className="flex size-11 cursor-pointer items-center justify-center rounded-full text-xl font-semibold transition-colors hover:bg-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate disabled:cursor-default"
               aria-label={
                 item.quantity === 1
-                  ? `Remover ${item.name} do pedido`
-                  : `Diminuir quantidade de ${item.name}`
+                  ? `Remover ${itemDisplayName} do pedido`
+                  : `Diminuir quantidade de ${itemDisplayName}`
               }
             >
               <span aria-hidden="true">−</span>
@@ -88,7 +90,7 @@ export function CartItem({ item }: { item: CartItemType }) {
               onClick={() => increaseQuantity(item.id)}
               disabled={isRemoving}
               className="flex size-11 cursor-pointer items-center justify-center rounded-full text-xl font-semibold transition-colors hover:bg-secondary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate disabled:cursor-default"
-              aria-label={`Aumentar quantidade de ${item.name}`}
+              aria-label={`Aumentar quantidade de ${itemDisplayName}`}
             >
               <span aria-hidden="true">+</span>
             </button>

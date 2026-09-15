@@ -1,4 +1,5 @@
 import type { Product } from "@/types/product";
+import { formatApproximateWeight } from "@/utils/format-weight";
 
 export type ProductPricePresentation =
   | { kind: "fixed"; priceInCents: number }
@@ -26,9 +27,8 @@ function normalizeFlavor(flavor?: string) {
 
 export function getProductSizeDisplayLabel(size: {
   label: string;
-  isApproximate?: boolean;
 }) {
-  return `${size.isApproximate ? "± " : ""}${size.label}`;
+  return formatApproximateWeight(size.label);
 }
 
 export function getProductPricePresentation(

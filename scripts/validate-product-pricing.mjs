@@ -29,6 +29,9 @@ try {
   const { getProductPricePresentation } = await vite.ssrLoadModule(
     "/src/utils/product-price.ts",
   );
+  const { formatApproximateWeight } = await vite.ssrLoadModule(
+    "/src/utils/format-weight.ts",
+  );
   const { getCircularImageIndex, getSwipeDirection } =
     await vite.ssrLoadModule("/src/utils/product-image-carousel.ts");
 
@@ -108,6 +111,14 @@ try {
   assert.equal(getSwipeDirection(64, 8), "previous");
   assert.equal(getSwipeDirection(40, 2), null);
   assert.equal(getSwipeDirection(64, 80), null);
+  assert.equal(formatApproximateWeight("300 g"), "± 300 g");
+  assert.equal(formatApproximateWeight("1kg"), "± 1 kg");
+  assert.equal(formatApproximateWeight("± 1,5 kg"), "± 1,5 kg");
+  assert.equal(
+    formatApproximateWeight("Brownie bits 100g"),
+    "Brownie bits ± 100 g",
+  );
+  assert.equal(formatApproximateWeight("Sem peso"), "Sem peso");
 
   const fixedPriceExpectations = [
     ["brownie-tradicional", "Brownie tradicional", 600],
@@ -314,7 +325,7 @@ try {
   );
   assert.equal(
     getCartItemVariantLabel(cakeBrigadeiro2kg),
-    "Brigadeiro • 2 kg",
+    "Brigadeiro • ± 2 kg",
   );
   assert.notEqual(cakeBrigadeiro1kg.id, cakeBrigadeiro2kg.id);
 
