@@ -9,6 +9,7 @@ import { formatCurrency } from "@/utils/format-currency";
 import {
   getFlavorPriceInCents,
   getProductPricePresentation,
+  resolveProductSelection,
 } from "@/utils/product-price";
 
 type ProductMenuItemProps = {
@@ -47,7 +48,19 @@ export function ProductMenuItem({
   const desktopColumns = imageOnRight
     ? "md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"
     : "md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]";
-  const pricePresentation = getProductPricePresentation(product);
+  const selectedCombination =
+    product.priceType === "by-size-and-flavor"
+      ? resolveProductSelection(product, {
+          flavor: selectedFlavor ?? undefined,
+          size: selectedSize ?? undefined,
+        })
+      : null;
+  const pricePresentation = selectedCombination
+    ? {
+        kind: "fixed" as const,
+        priceInCents: selectedCombination.unitPriceInCents,
+      }
+    : getProductPricePresentation(product);
   const productPriceLabel =
     pricePresentation.kind === "consult"
       ? "Consultar valor"
@@ -56,7 +69,10 @@ export function ProductMenuItem({
         }${formatCurrency(pricePresentation.priceInCents)}`;
   const hasSelectableFlavors = product.priceType !== "consult";
   const sizeOptions =
-    product.priceType === "by-size" ? product.sizes : undefined;
+    product.priceType === "by-size" ||
+    product.priceType === "by-size-and-flavor"
+      ? product.sizes
+      : undefined;
   const hasSelectableSizes = Boolean(sizeOptions?.length);
 
   useEffect(() => {
@@ -127,11 +143,21 @@ export function ProductMenuItem({
   }
 
   function getFlavorLabel(flavorName: string) {
-    const flavorPriceInCents = getFlavorPriceInCents(product, flavorName);
+    const flavorPriceInCents = getFlavorPriceInCents(
+      product,
+      flavorName,
+      selectedSize ?? undefined,
+    );
 
     return flavorPriceInCents === null
       ? flavorName
       : `${flavorName} — ${formatCurrency(flavorPriceInCents)}`;
+  }
+
+  function getSizeLabel(size: NonNullable<typeof sizeOptions>[number]) {
+    return "priceInCents" in size
+      ? `${size.label} — ${formatCurrency(size.priceInCents)}`
+      : size.label;
   }
 
   return (
@@ -164,8 +190,13 @@ export function ProductMenuItem({
           {productPriceLabel}
         </p>
 
-        {product.flavors && (
-          <div className="mt-7 border-l-4 border-chocolate/20 pl-4">
+        <div className="flex flex-col">
+          {product.flavors && (
+          <div
+            className={`mt-7 border-l-4 border-chocolate/20 pl-4 ${
+              product.priceType === "by-size-and-flavor" ? "order-2" : ""
+            }`}
+          >
             {hasSelectableFlavors ? (
               <fieldset
                 aria-describedby={
@@ -224,10 +255,14 @@ export function ProductMenuItem({
               </p>
             )}
           </div>
-        )}
+          )}
 
-        {sizeOptions && (
-          <div className="mt-7 border-l-4 border-chocolate/20 pl-4">
+          {sizeOptions && (
+          <div
+            className={`mt-7 border-l-4 border-chocolate/20 pl-4 ${
+              product.priceType === "by-size-and-flavor" ? "order-1" : ""
+            }`}
+          >
             {hasSelectableSizes ? (
               <fieldset
                 aria-describedby={selectionErrors.size ? sizeErrorId : undefined}
@@ -249,7 +284,7 @@ export function ProductMenuItem({
                             : "border-chocolate/20 bg-white/85 text-chocolate/75 hover:bg-white"
                         }`}
                       >
-                        {size.label} — {formatCurrency(size.priceInCents)}
+                        {getSizeLabel(size)}
                       </button>
                     );
                   })}
@@ -267,7 +302,7 @@ export function ProductMenuItem({
                       key={size.value}
                       className="rounded-full bg-white/60 px-3 py-2 text-sm text-chocolate/75"
                     >
-                      {size.label} — {formatCurrency(size.priceInCents)}
+                      {getSizeLabel(size)}
                     </li>
                   ))}
                 </ul>
@@ -284,7 +319,8 @@ export function ProductMenuItem({
               </p>
             )}
           </div>
-        )}
+          )}
+        </div>
 
         {product.priceType === "consult" ? (
           <p className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white/65 px-6 py-3 font-bold text-chocolate/75 ring-1 ring-chocolate/10 sm:w-auto">

@@ -75,13 +75,95 @@ try {
       {
         productId: "brownie-de-pote",
         flavor: "Brigadeiro",
+        size: "300g",
         quantity: 1,
       },
     ],
   });
   assert.equal(potBrownie.productsTotalCents, 1700);
   assert.equal(potBrownie.items[0].flavor, "Brigadeiro");
-  assert.equal(potBrownie.items[0].size, null);
+  assert.equal(potBrownie.items[0].size, "300 g");
+
+  const potFlavorPrices300g = new Map([
+    ["Ninho com Nutella", 1800],
+    ["Brigadeiro", 1700],
+    ["Brigadeiro branco", 1700],
+    ["Ninho", 1700],
+    ["Bem casado", 1700],
+  ]);
+  const validatedPotOrders300g = [...potFlavorPrices300g].map(
+    ([flavor, expectedPrice]) => {
+      const order = validate({
+        productsTotalCents: 1,
+        items: [
+          {
+            productId: "brownie-de-pote",
+            flavor,
+            size: "300g",
+            unitPriceInCents: 1,
+            quantity: 1,
+          },
+        ],
+      });
+
+      assert.equal(order.productsTotalCents, expectedPrice);
+      assert.equal(order.items[0].flavor, flavor);
+      assert.equal(order.items[0].size, "300 g");
+      assert.equal(order.items[0].unitPriceInCents, expectedPrice);
+      return order;
+    },
+  );
+  const validatedPotOrders800g = [...potFlavorPrices300g.keys()].map(
+    (flavor) => {
+      const order = validate({
+        productsTotalCents: 1,
+        items: [
+          {
+            productId: "brownie-de-pote",
+            flavor,
+            size: "800g",
+            unitPriceInCents: 1,
+            quantity: 1,
+          },
+        ],
+      });
+
+      assert.equal(order.productsTotalCents, 6000);
+      assert.equal(order.items[0].flavor, flavor);
+      assert.equal(order.items[0].size, "800 g");
+      assert.equal(order.items[0].unitPriceInCents, 6000);
+      return order;
+    },
+  );
+  assert.equal(validatedPotOrders300g.length, 5);
+  assert.equal(validatedPotOrders800g.length, 5);
+
+  const combinedPotOrder = validate({
+    items: [
+      {
+        productId: "brownie-de-pote",
+        flavor: "Ninho",
+        size: "800g",
+        quantity: 1,
+      },
+      {
+        productId: "brownie-de-pote",
+        flavor: "Ninho",
+        size: "800g",
+        quantity: 2,
+      },
+      {
+        productId: "brownie-de-pote",
+        flavor: "Ninho",
+        size: "300g",
+        quantity: 1,
+      },
+    ],
+  });
+  assert.equal(combinedPotOrder.items.length, 2);
+  assert.equal(combinedPotOrder.items[0].quantity, 3);
+  assert.equal(combinedPotOrder.items[1].quantity, 1);
+  assert.equal(combinedPotOrder.productsTotalCents, 19700);
 
   const brownieCake = validate({
     items: [
@@ -123,32 +205,6 @@ try {
   });
   assert.equal(filledBrownieBonbonNinhoNutella.productsTotalCents, 12000);
 
-  const superPotFlavors = [
-    "Ninho com Nutella",
-    "Brigadeiro",
-    "Brigadeiro branco",
-    "Ninho",
-    "Bem casado",
-  ];
-  const validatedSuperPotOrders = superPotFlavors.map((flavor) => {
-    const order = validate({
-      productsTotalCents: 1,
-      items: [
-        {
-          productId: "super-brownie-de-pote",
-          flavor,
-          unitPriceInCents: 1,
-          quantity: 1,
-        },
-      ],
-    });
-
-    assert.equal(order.productsTotalCents, 6000);
-    assert.equal(order.items[0].flavor, flavor);
-    assert.equal(order.items[0].unitPriceInCents, 6000);
-    return order;
-  });
-
   const preparedStatements = [];
   const fakeDatabase = {
     prepare(sql) {
@@ -171,17 +227,17 @@ try {
       ];
     },
   };
-  const persistedSuperPotOrder = await createOrder(
+  const persistedPotOrder = await createOrder(
     fakeDatabase,
-    validatedSuperPotOrders[0],
+    validatedPotOrders800g[0],
   );
-  assert.equal(persistedSuperPotOrder.orderId, 321);
+  assert.equal(persistedPotOrder.orderId, 321);
   assert.match(preparedStatements[1].sql, /INSERT INTO order_items/);
   assert.deepEqual(preparedStatements[1].values, [
-    "super-brownie-de-pote",
-    "Super brownie de pote",
+    "brownie-de-pote",
+    "Brownie de pote",
     "Ninho com Nutella",
-    null,
+    "800 g",
     1,
     6000,
   ]);
@@ -192,6 +248,7 @@ try {
       {
         productId: "brownie-de-pote",
         flavor: "Ninho com Nutella",
+        size: "300g",
         quantity: 1,
       },
       {
@@ -275,22 +332,42 @@ try {
     items: [
       {
         productId: "brownie-de-pote",
+        flavor: "Brigadeiro",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "brownie-de-pote",
+        size: "300g",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "brownie-de-pote",
         flavor: "Sabor inexistente",
+        size: "300g",
+        quantity: 1,
+      },
+    ],
+  });
+  expectInvalid({
+    items: [
+      {
+        productId: "brownie-de-pote",
+        flavor: "Brigadeiro",
+        size: "tamanho-inexistente",
         quantity: 1,
       },
     ],
   });
   expectInvalid({
     items: [{ productId: "super-brownie-de-pote", quantity: 1 }],
-  });
-  expectInvalid({
-    items: [
-      {
-        productId: "super-brownie-de-pote",
-        flavor: "Sabor inexistente",
-        quantity: 1,
-      },
-    ],
   });
   expectInvalid({
     items: [{ productId: "bombom-de-brownie", quantity: 1 }],

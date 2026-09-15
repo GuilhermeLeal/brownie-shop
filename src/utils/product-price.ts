@@ -35,7 +35,11 @@ export function getProductPricePresentation(
   }
 
   const prices =
-    product.priceType === "by-flavor" ? product.flavors : product.sizes;
+    product.priceType === "by-flavor"
+      ? product.flavors
+      : product.priceType === "by-size-and-flavor"
+        ? product.sizes.flatMap(({ flavorPrices }) => flavorPrices)
+        : product.sizes;
   const lowestOptionPrice = prices.reduce<number | null>(
     (lowestPrice, option) =>
       lowestPrice === null
@@ -52,6 +56,7 @@ export function getProductPricePresentation(
 export function getFlavorPriceInCents(
   product: Product,
   flavorName: string,
+  sizeValue?: string,
 ) {
   if (product.priceType === "consult") {
     return null;
@@ -66,6 +71,15 @@ export function getFlavorPriceInCents(
 
   if (product.priceType === "by-size") {
     return null;
+  }
+
+  if (product.priceType === "by-size-and-flavor") {
+    return (
+      product.sizes
+        .find(({ value }) => value === sizeValue)
+        ?.flavorPrices.find(({ name }) => name === flavorName)
+        ?.priceInCents ?? null
+    );
   }
 
   return product.flavors?.some(({ name }) => name === flavorName)
@@ -95,6 +109,24 @@ export function resolveProductSelection(
 
     return flavor
       ? { flavor: flavor.name, unitPriceInCents: flavor.priceInCents }
+      : null;
+  }
+
+  if (product.priceType === "by-size-and-flavor") {
+    const flavor = product.flavors.find(
+      ({ name }) => name === normalizedFlavor,
+    );
+    const size = product.sizes.find(({ value }) => value === normalizedSize);
+    const price = size?.flavorPrices.find(
+      ({ name }) => name === flavor?.name,
+    );
+
+    return flavor && size && price
+      ? {
+          flavor: flavor.name,
+          size: { value: size.value, label: size.label },
+          unitPriceInCents: price.priceInCents,
+        }
       : null;
   }
 

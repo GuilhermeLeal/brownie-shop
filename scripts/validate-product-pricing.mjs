@@ -39,7 +39,7 @@ try {
     return product;
   };
 
-  assert.equal(products.length, 11);
+  assert.equal(products.length, 10);
   assert.equal(
     products.some((product) =>
       product.description.toLowerCase().includes("lorem ipsum"),
@@ -53,7 +53,10 @@ try {
     ["brownie-amendoim", ["/images/products/brownie-amendoim.webp"]],
     [
       "brownie-chocolate-50",
-      ["/images/products/brownie-chocolate-50.webp"],
+      [
+        "/images/products/brownie-chocolate-1.webp",
+        "/images/products/brownie-chocolate-2.webp",
+      ],
     ],
     ["brownie-de-pote", ["/images/products/brownie-pote.webp"]],
     [
@@ -66,10 +69,12 @@ try {
     ],
     ["bombom-de-morango", ["/images/products/bombom-morango.webp"]],
     ["brownie-bits", ["/images/products/brownie-bits.webp"]],
-    ["bombom-de-brownie", ["/images/products/bombom-brownie.webp"]],
     [
-      "super-brownie-de-pote",
-      ["/images/products/super-brownie-pote.webp"],
+      "bombom-de-brownie",
+      [
+        "/images/products/bombom-brownie-1.webp",
+        "/images/products/bombom-brownie-2.webp",
+      ],
     ],
     ["rocambole-de-brownie", ["/images/products/rocambole-brownie.webp"]],
   ]);
@@ -130,19 +135,100 @@ try {
   assert.equal(traditional.unitPriceInCents, 600);
 
   const potBrownie = getProduct("brownie-de-pote");
-  const brigadeiro = createCartItem(potBrownie, {
-    flavor: "Brigadeiro",
+  assert.equal(potBrownie.priceType, "by-size-and-flavor");
+  assert.deepEqual(getProductPricePresentation(potBrownie), {
+    kind: "starting-at",
+    priceInCents: 1700,
   });
-  const ninhoWithNutella = createCartItem(
-    potBrownie,
-    { flavor: "Ninho com Nutella" },
+  assert.deepEqual(
+    potBrownie.sizes.map(({ value, label }) => ({ value, label })),
+    [
+      { value: "300g", label: "300 g" },
+      { value: "800g", label: "800 g" },
+    ],
+  );
+  assert.deepEqual(
+    potBrownie.flavors.map(({ name }) => name),
+    [
+      "Ninho com Nutella",
+      "Brigadeiro",
+      "Brigadeiro branco",
+      "Ninho",
+      "Bem casado",
+    ],
+  );
+  assert.equal(createCartItem(potBrownie), null);
+  assert.equal(
+    createCartItem(potBrownie, { flavor: "Brigadeiro" }),
+    null,
+  );
+  assert.equal(createCartItem(potBrownie, { size: "300g" }), null);
+  assert.equal(
+    createCartItem(potBrownie, {
+      flavor: "Brigadeiro",
+      size: "tamanho-inexistente",
+    }),
+    null,
+  );
+  assert.equal(
+    createCartItem(potBrownie, {
+      flavor: "Sabor inexistente",
+      size: "300g",
+    }),
+    null,
   );
 
-  assert.ok(brigadeiro);
-  assert.ok(ninhoWithNutella);
-  assert.equal(brigadeiro.unitPriceInCents, 1700);
-  assert.equal(ninhoWithNutella.unitPriceInCents, 1800);
+  const expectedPotPrices300g = new Map([
+    ["Ninho com Nutella", 1800],
+    ["Brigadeiro", 1700],
+    ["Brigadeiro branco", 1700],
+    ["Ninho", 1700],
+    ["Bem casado", 1700],
+  ]);
+  const potItems300g = potBrownie.flavors.map(({ name }) => {
+    const item = createCartItem(potBrownie, {
+      flavor: name,
+      size: "300g",
+    });
+
+    assert.ok(item);
+    assert.equal(item.flavor, name);
+    assert.equal(item.size.value, "300g");
+    assert.equal(item.size.label, "300 g");
+    assert.equal(item.unitPriceInCents, expectedPotPrices300g.get(name));
+    return item;
+  });
+  const potItems800g = potBrownie.flavors.map(({ name }) => {
+    const item = createCartItem(potBrownie, {
+      flavor: name,
+      size: "800g",
+    });
+
+    assert.ok(item);
+    assert.equal(item.flavor, name);
+    assert.equal(item.size.value, "800g");
+    assert.equal(item.size.label, "800 g");
+    assert.equal(item.unitPriceInCents, 6000);
+    return item;
+  });
+
+  const brigadeiro = potItems300g[1];
+  const ninhoWithNutella = potItems300g[0];
   assert.notEqual(brigadeiro.id, ninhoWithNutella.id);
+  assert.notEqual(potItems300g[3].id, potItems800g[3].id);
+
+  const repeatedPotCombination = addOrIncrementCartItem(
+    addOrIncrementCartItem([], potItems800g[3]),
+    createCartItem(potBrownie, { flavor: "Ninho", size: "800g" }),
+  );
+  assert.equal(repeatedPotCombination.length, 1);
+  assert.equal(repeatedPotCombination[0].quantity, 2);
+
+  const differentPotCombinations = addOrIncrementCartItem(
+    addOrIncrementCartItem([], potItems300g[3]),
+    potItems800g[3],
+  );
+  assert.equal(differentPotCombinations.length, 2);
 
   const simulatedCart = [
     { ...traditional, quantity: 2 },
@@ -267,43 +353,10 @@ try {
   assert.equal(bonbonCart.length, 1);
   assert.equal(bonbonCart[0].quantity, 2);
 
-  const superPotBrownie = getProduct("super-brownie-de-pote");
-  assert.deepEqual(getProductPricePresentation(superPotBrownie), {
-    kind: "fixed",
-    priceInCents: 6000,
-  });
-  assert.deepEqual(
-    superPotBrownie.flavors.map(({ name }) => name),
-    [
-      "Ninho com Nutella",
-      "Brigadeiro",
-      "Brigadeiro branco",
-      "Ninho",
-      "Bem casado",
-    ],
-  );
-  assert.equal(createCartItem(superPotBrownie), null);
   assert.equal(
-    createCartItem(superPotBrownie, { flavor: "Sabor inexistente" }),
-    null,
+    products.some(({ id }) => id === "super-brownie-de-pote"),
+    false,
   );
-
-  const superPotItems = superPotBrownie.flavors.map(({ name }) => {
-    const item = createCartItem(superPotBrownie, { flavor: name });
-
-    assert.ok(item);
-    assert.equal(item.flavor, name);
-    assert.equal(item.unitPriceInCents, 6000);
-    return item;
-  });
-  assert.notEqual(superPotItems[1].id, superPotItems[3].id);
-
-  const superPotCart = addOrIncrementCartItem(
-    addOrIncrementCartItem([], superPotItems[3]),
-    createCartItem(superPotBrownie, { flavor: "Ninho" }),
-  );
-  assert.equal(superPotCart.length, 1);
-  assert.equal(superPotCart[0].quantity, 2);
 
   const checkoutItems = [
     cakeBrigadeiro1kg,

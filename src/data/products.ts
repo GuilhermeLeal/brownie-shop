@@ -8,15 +8,34 @@ const FLAVOR_NAMES = [
   "Bem casado",
 ] as const;
 
-const BROWNIE_POT_FLAVORS = [
-  { name: "Ninho com Nutella", priceInCents: 1800 },
-  { name: "Brigadeiro", priceInCents: 1700 },
-  { name: "Brigadeiro branco", priceInCents: 1700 },
-  { name: "Ninho", priceInCents: 1700 },
-  { name: "Bem casado", priceInCents: 1700 },
-] as const;
-
 const BRIGADEIRO_FLAVORS = FLAVOR_NAMES.map((name) => ({ name }));
+
+type BrigadeiroFlavorName = (typeof FLAVOR_NAMES)[number];
+
+function createBrigadeiroFlavorPrices(
+  defaultPriceInCents: number,
+  overrides: Partial<Record<BrigadeiroFlavorName, number>> = {},
+) {
+  return BRIGADEIRO_FLAVORS.map(({ name }) => ({
+    name,
+    priceInCents: overrides[name] ?? defaultPriceInCents,
+  }));
+}
+
+const BROWNIE_POT_SIZES = [
+  {
+    value: "300g",
+    label: "300 g",
+    flavorPrices: createBrigadeiroFlavorPrices(1700, {
+      "Ninho com Nutella": 1800,
+    }),
+  },
+  {
+    value: "800g",
+    label: "800 g",
+    flavorPrices: createBrigadeiroFlavorPrices(6000),
+  },
+] as const;
 
 const BROWNIE_CAKE_SIZES = [
   { value: "1kg", label: "1 kg", priceInCents: 10000 },
@@ -61,16 +80,20 @@ export const products = [
       "Brownie com chocolate 50%, finalizado com uma casquinha de chocolate 50%.",
     priceType: "fixed",
     priceInCents: 800,
-    images: ["/images/products/brownie-chocolate-50.webp"],
+    images: [
+      "/images/products/brownie-chocolate-1.webp",
+      "/images/products/brownie-chocolate-2.webp",
+    ],
   },
   {
     id: "brownie-de-pote",
     name: "Brownie de pote",
     description:
-      "Cubinhos de brownie com recheio de brigadeiro à sua escolha. Aproximadamente 300 g.",
-    priceType: "by-flavor",
+      "Cubinhos de brownie com recheio de brigadeiro à sua escolha, disponíveis em dois tamanhos.",
+    priceType: "by-size-and-flavor",
     images: ["/images/products/brownie-pote.webp"],
-    flavors: BROWNIE_POT_FLAVORS,
+    flavors: BRIGADEIRO_FLAVORS,
+    sizes: BROWNIE_POT_SIZES,
   },
   {
     id: "bolo-de-brownie",
@@ -111,17 +134,10 @@ export const products = [
       "Casquinha de chocolate 50% recheada com cubos de brownie e brigadeiro à sua escolha. Aproximadamente 1,5 kg.",
     priceType: "fixed",
     priceInCents: 12000,
-    images: ["/images/products/bombom-brownie.webp"],
-    flavors: BRIGADEIRO_FLAVORS,
-  },
-  {
-    id: "super-brownie-de-pote",
-    name: "Super brownie de pote",
-    description:
-      "Cubinhos de brownie com uma porção ainda mais generosa de brigadeiro à sua escolha. Aproximadamente 800 g.",
-    priceType: "fixed",
-    priceInCents: 6000,
-    images: ["/images/products/super-brownie-pote.webp"],
+    images: [
+      "/images/products/bombom-brownie-1.webp",
+      "/images/products/bombom-brownie-2.webp",
+    ],
     flavors: BRIGADEIRO_FLAVORS,
   },
   {

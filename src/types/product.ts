@@ -19,6 +19,12 @@ export type ProductSizeOption = {
   priceInCents: number;
 };
 
+export type FlavorPricedProductSizeOption = {
+  value: string;
+  label: string;
+  flavorPrices: readonly PricedProductFlavor[];
+};
+
 export type FixedPriceProduct = ProductBase & {
   priceType: "fixed";
   priceInCents: number;
@@ -38,6 +44,13 @@ export type SizePricedProduct = ProductBase & {
   priceInCents?: never;
 };
 
+export type SizeAndFlavorPricedProduct = ProductBase & {
+  priceType: "by-size-and-flavor";
+  sizes: readonly FlavorPricedProductSizeOption[];
+  flavors: readonly ProductFlavor[];
+  priceInCents?: never;
+};
+
 export type ConsultPriceProduct = ProductBase & {
   priceType: "consult";
   flavors?: readonly ProductFlavor[];
@@ -48,4 +61,5 @@ export type Product =
   | FixedPriceProduct
   | FlavorPricedProduct
   | SizePricedProduct
+  | SizeAndFlavorPricedProduct
   | ConsultPriceProduct;
