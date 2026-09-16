@@ -55,10 +55,10 @@ export function Header() {
           <a
             href="#inicio"
             className="inline-flex items-center gap-2 rounded-full font-heading text-xl font-bold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-4 focus-visible:ring-offset-background sm:text-2xl"
-            aria-label="Brownies & Doces — início"
+            aria-label="Brownieria Gabi Leal — início"
           >
             <span className="size-2.5 rounded-full bg-primary" aria-hidden="true" />
-            Brownies &amp; Doces
+            Brownieria Gabi Leal
           </a>
 
           <div className="hidden items-center gap-3 md:flex">
