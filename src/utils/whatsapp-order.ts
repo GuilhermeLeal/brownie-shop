@@ -43,6 +43,9 @@ function formatOrderItem(item: CreatedOrderItem) {
 export function buildWhatsAppOrderMessage(order: CreatedOrder) {
   const isDelivery = order.fulfillmentType === "delivery";
   const fulfillmentLabel = isDelivery ? "Entrega" : "Retirada";
+  const requestedDateLabel = isDelivery
+    ? "Data desejada para entrega"
+    : "Data desejada para retirada";
   const fulfillmentNotice = isDelivery
     ? "A taxa e os detalhes da entrega serão combinados por aqui."
     : "O local e o horário da retirada serão combinados por aqui.";
@@ -53,13 +56,14 @@ export function buildWhatsAppOrderMessage(order: CreatedOrder) {
     "",
     `Pedido #${order.orderId}`,
     `Nome: ${order.customerName}`,
-    `Data: ${formatDateInputValue(order.requestedDate)}`,
+    `${requestedDateLabel}: ${formatDateInputValue(order.requestedDate)}`,
     `Recebimento: ${fulfillmentLabel}`,
     "",
     "Pedido:",
     ...order.items.map(formatOrderItem),
     "",
     `Total dos produtos: ${formatMessageCurrency(order.productsTotalCents)}`,
+    "Pagamento: 50% antecipadamente para confirmar o pedido e 50% no recebimento.",
     "",
     `Observações: ${notes}`,
     "",

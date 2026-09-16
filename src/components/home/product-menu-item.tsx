@@ -73,7 +73,10 @@ export function ProductMenuItem({
       ? product.sizes
       : undefined;
   const hasSelectableSizes = Boolean(sizeOptions?.length);
-  const productDisplayName = formatApproximateWeight(product.name);
+  const productDisplayName =
+    product.id === "brownie-bits"
+      ? "Brownie bits"
+      : formatApproximateWeight(product.name);
   const productDisplayDescription = formatApproximateWeight(
     product.description,
   );
@@ -184,7 +187,7 @@ export function ProductMenuItem({
       />
 
       <div
-        className={`max-w-lg ${
+        className={`w-full max-w-lg ${
           imageOnRight ? "md:order-1 md:justify-self-end" : "md:order-2"
         }`}
       >

@@ -370,7 +370,7 @@ try {
     "",
     "Pedido #123",
     "Nome: Guilherme",
-    "Data: 18/09/2026",
+    "Data desejada para entrega: 18/09/2026",
     "Recebimento: Entrega",
     "",
     "Pedido:",
@@ -378,6 +378,7 @@ try {
     "• 1x Rocambole de brownie — ± 800 g — Prestígio — R$ 90,00",
     "",
     "Total dos produtos: R$ 126,00",
+    "Pagamento: 50% antecipadamente para confirmar o pedido e 50% no recebimento.",
     "",
     "Observações: Sem observações.",
     "",
@@ -403,6 +404,10 @@ try {
     notes: "Retirar após as 15h.",
   });
   assert.match(pickupMessage, /Pedido #124/);
+  assert.match(
+    pickupMessage,
+    /Data desejada para retirada: 18\/09\/2026/,
+  );
   assert.match(pickupMessage, /Recebimento: Retirada/);
   assert.match(
     pickupMessage,

@@ -295,10 +295,11 @@ export function CheckoutForm({ onBack, onReview }: CheckoutFormProps) {
           </div>
 
           <aside className="rounded-[1.5rem] bg-background p-4">
-            <p className="font-bold">Pagamento no recebimento</p>
+            <p className="font-bold">Pagamento em duas etapas</p>
             <p className="mt-1 text-sm leading-6 text-chocolate/70">
-              O pagamento será realizado no momento do recebimento do pedido.
-              Não há pagamento online neste site.
+              Para confirmar o pedido, é necessário o pagamento de 50% do
+              valor antecipadamente. Os 50% restantes são pagos no momento da
+              entrega ou retirada.
             </p>
           </aside>
         </div>
