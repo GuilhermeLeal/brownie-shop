@@ -21,8 +21,40 @@ const gabarito = Gabarito({
 });
 
 export const metadata: Metadata = {
-  title: "Brownies & Doces",
-  description: "Cardápio de brownies e doces.",
+  metadataBase: new URL("https://brownieriagabileal.shop"),
+  title: "Brownieria Gabi Leal | Brownies Artesanais",
+  description:
+    "Brownies artesanais feitos com carinho, sabores especiais, bolos de brownie, rocamboles e muito mais. Faça seu pedido na Brownieria Gabi Leal.",
+  alternates: {
+    canonical: "https://brownieriagabileal.shop",
+  },
+  openGraph: {
+    title: "Brownieria Gabi Leal | Brownies Artesanais",
+    description:
+      "Brownies artesanais feitos com carinho, sabores especiais e opções para deixar qualquer momento mais gostoso.",
+    url: "https://brownieriagabileal.shop",
+    siteName: "Brownieria Gabi Leal",
+    locale: "pt_BR",
+    type: "website",
+    images: [
+      {
+        url: "/images/brand/logo-brownieria-gabi-leal.png",
+        alt: "Brownieria Gabi Leal - Doces artesanais",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brownieria Gabi Leal | Brownies Artesanais",
+    description:
+      "Brownies artesanais feitos com carinho, sabores especiais e opções para deixar qualquer momento mais gostoso.",
+    images: [
+      {
+        url: "/images/brand/logo-brownieria-gabi-leal.png",
+        alt: "Brownieria Gabi Leal - Doces artesanais",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
