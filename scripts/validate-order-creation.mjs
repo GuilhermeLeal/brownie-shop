@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { createServer } from "vite";
@@ -29,6 +30,14 @@ try {
   const { validateOrderDetails } = await vite.ssrLoadModule(
     "/src/utils/validate-order-details.ts",
   );
+  const { resetOrderFlow } = await vite.ssrLoadModule(
+    "/src/utils/order-flow.ts",
+  );
+  const {
+    buildWhatsAppOrderMessage,
+    buildWhatsAppOrderUrl,
+    WHATSAPP_PHONE_NUMBER,
+  } = await vite.ssrLoadModule("/src/utils/whatsapp-order.ts");
   const today = "2026-09-02";
   const tomorrow = "2026-09-03";
   const minimumOrderDate = "2026-09-04";
@@ -296,6 +305,17 @@ try {
     validatedPotOrders800g[0],
   );
   assert.equal(persistedPotOrder.orderId, 321);
+  assert.equal(persistedPotOrder.customerName, "Cliente de Teste");
+  assert.equal(persistedPotOrder.requestedDate, minimumOrderDate);
+  assert.equal(persistedPotOrder.fulfillmentType, "pickup");
+  assert.equal(persistedPotOrder.notes, "Teste automatizado");
+  assert.equal(persistedPotOrder.productsTotalCents, 7000);
+  assert.deepEqual(persistedPotOrder.items, validatedPotOrders800g[0].items);
+  assert.notEqual(persistedPotOrder.items, validatedPotOrders800g[0].items);
+  assert.notEqual(
+    persistedPotOrder.items[0],
+    validatedPotOrders800g[0].items[0],
+  );
   assert.match(preparedStatements[1].sql, /INSERT INTO order_items/);
   assert.deepEqual(preparedStatements[1].values, [
     "brownie-de-pote",
@@ -317,6 +337,131 @@ try {
     1,
     12000,
   ]);
+
+  const deliveryWhatsAppOrder = {
+    orderId: 123,
+    status: "pending_confirmation",
+    customerName: "Guilherme",
+    requestedDate: "2026-09-18",
+    fulfillmentType: "delivery",
+    notes: null,
+    items: [
+      {
+        productId: "brownie-de-pote",
+        productName: "Brownie de pote",
+        flavor: "Ninho com Nutella",
+        size: "300 g",
+        quantity: 2,
+        unitPriceInCents: 1800,
+      },
+      {
+        productId: "rocambole-de-brownie",
+        productName: "Rocambole de brownie",
+        flavor: "Prestígio",
+        size: null,
+        quantity: 1,
+        unitPriceInCents: 9000,
+      },
+    ],
+    productsTotalCents: 12600,
+  };
+  const expectedDeliveryMessage = [
+    "Olá, Gabi! Fiz um pedido pelo site da Brownieria Gabi Leal.",
+    "",
+    "Pedido #123",
+    "Nome: Guilherme",
+    "Data: 18/09/2026",
+    "Recebimento: Entrega",
+    "",
+    "Pedido:",
+    "• 2x Brownie de pote — ± 300 g — Ninho com Nutella — R$ 36,00",
+    "• 1x Rocambole de brownie — ± 800 g — Prestígio — R$ 90,00",
+    "",
+    "Total dos produtos: R$ 126,00",
+    "",
+    "Observações: Sem observações.",
+    "",
+    "A taxa e os detalhes da entrega serão combinados por aqui.",
+    "",
+    "Pode me confirmar os detalhes do pedido?",
+  ].join("\n");
+  const deliveryMessage = buildWhatsAppOrderMessage(deliveryWhatsAppOrder);
+  const deliveryUrl = buildWhatsAppOrderUrl(deliveryWhatsAppOrder);
+  const parsedDeliveryUrl = new URL(deliveryUrl);
+
+  assert.equal(deliveryMessage, expectedDeliveryMessage);
+  assert.equal(WHATSAPP_PHONE_NUMBER, "5581997175067");
+  assert.equal(parsedDeliveryUrl.origin, "https://wa.me");
+  assert.equal(parsedDeliveryUrl.pathname, "/5581997175067");
+  assert.equal(parsedDeliveryUrl.searchParams.get("text"), deliveryMessage);
+  assert.match(deliveryUrl, /\?text=.+%0A/);
+
+  const pickupMessage = buildWhatsAppOrderMessage({
+    ...deliveryWhatsAppOrder,
+    orderId: 124,
+    fulfillmentType: "pickup",
+    notes: "Retirar após as 15h.",
+  });
+  assert.match(pickupMessage, /Pedido #124/);
+  assert.match(pickupMessage, /Recebimento: Retirada/);
+  assert.match(
+    pickupMessage,
+    /O local e o horário da retirada serão combinados por aqui\./,
+  );
+  assert.doesNotMatch(pickupMessage, /taxa e os detalhes da entrega/i);
+  assert.match(pickupMessage, /Observações: Retirar após as 15h\./);
+
+  const noVariantMessage = buildWhatsAppOrderMessage({
+    ...deliveryWhatsAppOrder,
+    items: [
+      {
+        productId: "brownie-tradicional",
+        productName: "Brownie tradicional",
+        flavor: null,
+        size: null,
+        quantity: 1,
+        unitPriceInCents: 600,
+      },
+    ],
+    productsTotalCents: 600,
+  });
+  assert.match(noVariantMessage, /• 1x Brownie tradicional — R\$ 6,00/);
+  assert.doesNotMatch(noVariantMessage, /—\s+—/);
+
+  const persistedOrderUrl = buildWhatsAppOrderUrl(persistedPotOrder);
+  validatedPotOrders800g[0].items[0].quantity = 3;
+  assert.equal(persistedPotOrder.items[0].quantity, 1);
+  assert.equal(buildWhatsAppOrderUrl(persistedPotOrder), persistedOrderUrl);
+
+  const resetCalls = [];
+  resetOrderFlow({
+    clearCart: () => resetCalls.push("cart"),
+    resetCheckout: () => resetCalls.push("checkout"),
+    closeCart: () => resetCalls.push("close"),
+  });
+  assert.deepEqual(resetCalls, ["cart", "checkout", "close"]);
+
+  const orderSuccessSource = readFileSync(
+    path.join(projectRoot, "src/components/checkout/order-success.tsx"),
+    "utf8",
+  );
+  const cartDrawerSource = readFileSync(
+    path.join(projectRoot, "src/components/cart/cart-drawer.tsx"),
+    "utf8",
+  );
+  const whatsappLink = orderSuccessSource.match(
+    /<a[\s\S]*?Enviar pedido pelo WhatsApp[\s\S]*?<\/a>/,
+  );
+  assert.ok(whatsappLink);
+  assert.match(whatsappLink[0], /target="_blank"/);
+  assert.match(whatsappLink[0], /rel="noopener noreferrer"/);
+  assert.doesNotMatch(whatsappLink[0], /onClick=/);
+  assert.doesNotMatch(orderSuccessSource, /submitOrder|clearCart/);
+  assert.match(orderSuccessSource, /Fazer novo pedido/);
+  assert.match(
+    cartDrawerSource,
+    /activeStep === "success" && createdOrder/,
+  );
 
   const multipleProducts = validate({
     items: [

@@ -9,6 +9,7 @@ import { OrderSuccess } from "@/components/checkout/order-success";
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
 import type { CheckoutStep } from "@/types/checkout";
+import { resetOrderFlow } from "@/utils/order-flow";
 
 const stepTitles: Record<CheckoutStep, string> = {
   cart: "Seu pedido",
@@ -29,8 +30,8 @@ export function CartDrawer() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const previousStepRef = useRef<CheckoutStep>("cart");
   const previousBodyOverflowRef = useRef<string | null>(null);
-  const { items, isCartOpen, closeCart } = useCart();
-  const { step, createdOrder, setStep } = useCheckout();
+  const { items, isCartOpen, clearCart, closeCart } = useCart();
+  const { step, createdOrder, setStep, resetCheckout } = useCheckout();
   const activeStep: CheckoutStep = items.length === 0 ? "cart" : step;
 
   const restorePageScroll = useCallback(() => {
@@ -93,6 +94,10 @@ export function CartDrawer() {
     dialog.close();
     dialog.dataset.state = "closed";
     restorePageScroll();
+  }
+
+  function handleStartNewOrder() {
+    resetOrderFlow({ clearCart, resetCheckout, closeCart });
   }
 
   return (
@@ -175,7 +180,10 @@ export function CartDrawer() {
           <OrderReview onBack={() => setStep("details")} />
         )}
         {activeStep === "success" && createdOrder && (
-          <OrderSuccess order={createdOrder} onClose={closeCart} />
+          <OrderSuccess
+            order={createdOrder}
+            onStartNewOrder={handleStartNewOrder}
+          />
         )}
       </section>
     </dialog>

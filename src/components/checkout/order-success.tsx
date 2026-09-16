@@ -1,14 +1,16 @@
 "use client";
 
 import type { CreatedOrder } from "@/types/order";
-import { formatCurrency } from "@/utils/format-currency";
+import { buildWhatsAppOrderUrl } from "@/utils/whatsapp-order";
 
 type OrderSuccessProps = {
   order: CreatedOrder;
-  onClose: () => void;
+  onStartNewOrder: () => void;
 };
 
-export function OrderSuccess({ order, onClose }: OrderSuccessProps) {
+export function OrderSuccess({ order, onStartNewOrder }: OrderSuccessProps) {
+  const whatsappUrl = buildWhatsAppOrderUrl(order);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-1 items-center overflow-y-auto px-5 py-8 sm:px-6">
@@ -29,45 +31,31 @@ export function OrderSuccess({ order, onClose }: OrderSuccessProps) {
               <path d="m5 12 4 4L19 6" />
             </svg>
           </span>
-          <p className="mt-5 text-sm font-bold uppercase tracking-[0.18em] text-chocolate/55">
-            Pedido registrado
-          </p>
-          <h3 className="mt-2 font-heading text-4xl font-bold">
-            Pedido #{order.orderId} criado
+          <h3 className="mt-5 font-heading text-4xl font-bold">
+            Pedido #{order.orderId} criado!
           </h3>
           <p className="mx-auto mt-3 max-w-sm leading-7 text-chocolate/70">
-            Seu pedido foi registrado com sucesso.
-          </p>
-
-          <dl className="mt-6 space-y-3 rounded-[1.5rem] bg-white p-5 text-left">
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm font-semibold text-chocolate/60">Status</dt>
-              <dd className="font-bold">Aguardando confirmação</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4 border-t border-chocolate/10 pt-3">
-              <dt className="text-sm font-semibold text-chocolate/60">
-                Total dos produtos
-              </dt>
-              <dd className="font-heading text-xl font-bold">
-                {formatCurrency(order.productsTotalCents)}
-              </dd>
-            </div>
-          </dl>
-
-          <p className="mt-5 text-sm leading-6 text-chocolate/65">
-            Na próxima etapa, este pedido será enviado para confirmação pelo
-            WhatsApp.
+            Agora envie seu pedido pelo WhatsApp para combinar os detalhes com
+            a Gabi.
           </p>
         </div>
       </div>
 
       <footer className="border-t border-chocolate/10 bg-white px-5 py-5 sm:px-6">
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-chocolate px-5 py-3 text-center font-bold text-white transition-colors hover:bg-primary hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2"
+        >
+          Enviar pedido pelo WhatsApp
+        </a>
         <button
           type="button"
-          onClick={onClose}
-          className="min-h-12 w-full cursor-pointer rounded-full bg-chocolate px-5 py-3 font-bold text-white transition-colors hover:bg-primary hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2"
+          onClick={onStartNewOrder}
+          className="mt-3 min-h-11 w-full cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-chocolate/70 underline decoration-chocolate/30 underline-offset-4 transition-colors hover:bg-background hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2"
         >
-          Fechar
+          Fazer novo pedido
         </button>
       </footer>
     </div>

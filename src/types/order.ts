@@ -18,10 +18,24 @@ export type CreateOrderInput = {
   items: CreateOrderItemInput[];
 };
 
+export type CreatedOrderItem = {
+  readonly productId: string;
+  readonly productName: string;
+  readonly flavor: string | null;
+  readonly size: string | null;
+  readonly quantity: number;
+  readonly unitPriceInCents: number;
+};
+
 export type CreatedOrder = {
-  orderId: number;
-  status: typeof pendingConfirmationStatus;
-  productsTotalCents: number;
+  readonly orderId: number;
+  readonly status: typeof pendingConfirmationStatus;
+  readonly customerName: string;
+  readonly requestedDate: string;
+  readonly fulfillmentType: FulfillmentMethod;
+  readonly notes: string | null;
+  readonly items: readonly CreatedOrderItem[];
+  readonly productsTotalCents: number;
 };
 
 export type CreateOrderErrorResponse = {

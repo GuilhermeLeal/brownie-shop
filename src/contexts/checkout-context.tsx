@@ -49,7 +49,10 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
   );
 
   const completeOrder = useCallback((order: CreatedOrder) => {
-    setCreatedOrder(order);
+    setCreatedOrder({
+      ...order,
+      items: order.items.map((item) => ({ ...item })),
+    });
     setStep("success");
   }, []);
 

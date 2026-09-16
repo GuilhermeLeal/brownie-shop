@@ -69,6 +69,11 @@ export async function createOrder(
   return {
     orderId,
     status: pendingConfirmationStatus,
+    customerName: order.customerName,
+    requestedDate: order.requestedDate,
+    fulfillmentType: order.fulfillmentType,
+    notes: order.notes,
+    items: order.items.map((item) => ({ ...item })),
     productsTotalCents: order.productsTotalCents,
   };
 }
