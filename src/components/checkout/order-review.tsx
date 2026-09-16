@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { TurnstileWidget } from "@/components/checkout/turnstile-widget";
+import { TURNSTILE_ERROR_MESSAGE } from "@/constants/turnstile";
 import { useCart } from "@/contexts/cart-context";
 import { useCheckout } from "@/contexts/checkout-context";
 import {
@@ -24,7 +26,19 @@ export function OrderReview({ onBack }: OrderReviewProps) {
   const { orderDetails, completeOrder } = useCheckout();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const isDelivery = orderDetails.fulfillmentMethod === "delivery";
+
+  function resetTurnstile() {
+    setTurnstileToken(null);
+    setTurnstileResetKey((currentKey) => currentKey + 1);
+  }
+
+  function handleTurnstileError() {
+    resetTurnstile();
+    setSubmissionError(TURNSTILE_ERROR_MESSAGE);
+  }
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -38,11 +52,17 @@ export function OrderReview({ onBack }: OrderReviewProps) {
       return;
     }
 
+    if (!turnstileToken) {
+      setSubmissionError(TURNSTILE_ERROR_MESSAGE);
+      return;
+    }
+
     const input: CreateOrderInput = {
       customerName: orderDetails.name,
       customerPhone: orderDetails.phone,
       requestedDate: orderDetails.desiredDate,
       fulfillmentType: orderDetails.fulfillmentMethod,
+      turnstileToken,
       notes: orderDetails.notes || undefined,
       items: items.map((item) => ({
         productId: item.productId,
@@ -64,6 +84,7 @@ export function OrderReview({ onBack }: OrderReviewProps) {
           ? error.message
           : "Não foi possível registrar o pedido. Tente novamente.",
       );
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -213,7 +234,22 @@ export function OrderReview({ onBack }: OrderReviewProps) {
       </div>
 
       <footer className="border-t border-chocolate/10 bg-white px-5 py-5 sm:px-6">
-        <div className="grid grid-cols-2 gap-3">
+        <TurnstileWidget
+          resetKey={turnstileResetKey}
+          onTokenChange={(token) => {
+            setTurnstileToken(token);
+
+            if (token) {
+              setSubmissionError((currentError) =>
+                currentError === TURNSTILE_ERROR_MESSAGE
+                  ? null
+                  : currentError,
+              );
+            }
+          }}
+          onVerificationError={handleTurnstileError}
+        />
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={onBack}
@@ -224,11 +260,11 @@ export function OrderReview({ onBack }: OrderReviewProps) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !turnstileToken}
             aria-describedby={
               submissionError ? "order-submission-error" : undefined
             }
-            className="min-h-12 rounded-full bg-chocolate px-4 py-3 font-bold text-white transition-colors enabled:cursor-pointer enabled:hover:bg-primary enabled:hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+            className="min-h-12 rounded-full bg-chocolate px-4 py-3 font-bold text-white transition-colors enabled:cursor-pointer enabled:hover:bg-primary enabled:hover:text-chocolate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chocolate focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Finalizando..." : "Finalizar pedido"}
           </button>

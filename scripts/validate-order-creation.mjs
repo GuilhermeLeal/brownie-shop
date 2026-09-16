@@ -23,8 +23,19 @@ try {
   const { createOrder } = await vite.ssrLoadModule(
     "/src/server/orders/create-order.ts",
   );
+  const { handleOrderPost } = await vite.ssrLoadModule(
+    "/src/server/orders/handle-order-post.ts",
+  );
   const { OrderValidationError, validateCreateOrderPayload } =
     await vite.ssrLoadModule("/src/server/orders/validate-order.ts");
+  const { getTurnstileSecret, verifyTurnstileToken } =
+    await vite.ssrLoadModule("/src/server/turnstile.ts");
+  const {
+    TURNSTILE_ACTION,
+    TURNSTILE_PRODUCTION_SITE_KEY,
+    TURNSTILE_SITE_KEY,
+    TURNSTILE_TEST_SITE_KEY,
+  } = await vite.ssrLoadModule("/src/constants/turnstile.ts");
   const { getDateInputValueInTimeZone, getMinimumOrderDate } =
     await vite.ssrLoadModule("/src/utils/date.ts");
   const { validateOrderDetails } = await vite.ssrLoadModule(
@@ -300,6 +311,235 @@ try {
       ];
     },
   };
+
+  const turnstileVerificationInput = {
+    token: "valid-token",
+    secret: "configured-production-secret",
+    remoteIp: "203.0.113.10",
+    expectedHostname: "brownieria.example",
+    isProduction: true,
+  };
+  assert.equal(TURNSTILE_ACTION, "create_order");
+  assert.equal(
+    TURNSTILE_PRODUCTION_SITE_KEY,
+    "0x4AAAAAAE3WKzGB7qZyLLtH",
+  );
+  assert.equal(TURNSTILE_TEST_SITE_KEY, "1x00000000000000000000AA");
+  assert.equal(TURNSTILE_SITE_KEY, TURNSTILE_TEST_SITE_KEY);
+  const createSiteverifyResponse = (result, inspectRequest = () => {}) =>
+    async (url, init) => {
+      inspectRequest(url, init);
+      return Response.json(result);
+    };
+
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      fetchImplementation: createSiteverifyResponse(
+        {
+          success: true,
+          action: "create_order",
+          hostname: "brownieria.example",
+        },
+        (url, init) => {
+          assert.equal(
+            url,
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+          );
+          assert.equal(init.method, "POST");
+          assert.equal(init.body.get("secret"), "configured-production-secret");
+          assert.equal(init.body.get("response"), "valid-token");
+          assert.equal(init.body.get("remoteip"), "203.0.113.10");
+        },
+      ),
+    }),
+    true,
+  );
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      fetchImplementation: createSiteverifyResponse({
+        success: false,
+        action: "create_order",
+        hostname: "brownieria.example",
+      }),
+    }),
+    false,
+  );
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      fetchImplementation: createSiteverifyResponse({
+        success: true,
+        action: "outra_action",
+        hostname: "brownieria.example",
+      }),
+    }),
+    false,
+  );
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      fetchImplementation: createSiteverifyResponse({
+        success: true,
+        action: "create_order",
+        hostname: "outro-host.example",
+      }),
+    }),
+    false,
+  );
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      fetchImplementation: async () => {
+        throw new Error("Siteverify indisponível");
+      },
+    }),
+    false,
+  );
+
+  let missingSecretFetchCount = 0;
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      secret: undefined,
+      fetchImplementation: async () => {
+        missingSecretFetchCount += 1;
+        return Response.json({ success: true });
+      },
+    }),
+    false,
+  );
+  assert.equal(missingSecretFetchCount, 0);
+  assert.equal(getTurnstileSecret(undefined, true), null);
+  assert.equal(
+    getTurnstileSecret(undefined, false),
+    "1x0000000000000000000000000000000AA",
+  );
+  assert.equal(
+    await verifyTurnstileToken({
+      ...turnstileVerificationInput,
+      secret: undefined,
+      expectedHostname: "localhost",
+      isProduction: false,
+      fetchImplementation: createSiteverifyResponse(
+        {
+          success: true,
+          action: "create_order",
+          hostname: "localhost",
+        },
+        (_url, init) => {
+          assert.equal(
+            init.body.get("secret"),
+            "1x0000000000000000000000000000000AA",
+          );
+        },
+      ),
+    }),
+    true,
+  );
+
+  const orderPostPayload = {
+    customerName: "Cliente Turnstile",
+    customerPhone: "81999999999",
+    requestedDate: "2099-09-18",
+    fulfillmentType: "delivery",
+    notes: "Manter estes dados",
+    turnstileToken: "first-token",
+    items: [{ productId: "brownie-tradicional", quantity: 1 }],
+  };
+  const createOrderRequest = (payload) =>
+    new Request("https://brownieria.example/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CF-Connecting-IP": "203.0.113.10",
+      },
+      body: JSON.stringify(payload),
+    });
+  let verifyCallCount = 0;
+  let createCallCount = 0;
+  const createPersistedOrder = async (order) => {
+    createCallCount += 1;
+    return createOrder(fakeDatabase, order);
+  };
+
+  preparedStatements.length = 0;
+  let orderResponse = await handleOrderPost(
+    createOrderRequest({
+      ...orderPostPayload,
+      turnstileToken: undefined,
+    }),
+    {
+      verifyTurnstile: async () => {
+        verifyCallCount += 1;
+        return true;
+      },
+      createOrder: createPersistedOrder,
+    },
+  );
+  assert.equal(orderResponse.status, 400);
+  assert.deepEqual(await orderResponse.json(), {
+    error: "Não foi possível verificar sua solicitação. Tente novamente.",
+  });
+  assert.equal(verifyCallCount, 0);
+  assert.equal(createCallCount, 0);
+  assert.equal(preparedStatements.length, 0);
+
+  orderResponse = await handleOrderPost(createOrderRequest(orderPostPayload), {
+    verifyTurnstile: async ({ token, remoteIp, expectedHostname }) => {
+      verifyCallCount += 1;
+      assert.equal(token, "first-token");
+      assert.equal(remoteIp, "203.0.113.10");
+      assert.equal(expectedHostname, "brownieria.example");
+      return false;
+    },
+    createOrder: createPersistedOrder,
+  });
+  assert.equal(orderResponse.status, 400);
+  assert.equal(createCallCount, 0);
+  assert.equal(preparedStatements.length, 0);
+
+  orderResponse = await handleOrderPost(createOrderRequest(orderPostPayload), {
+    verifyTurnstile: async () => {
+      throw new Error("Siteverify indisponível");
+    },
+    createOrder: createPersistedOrder,
+  });
+  assert.equal(orderResponse.status, 400);
+  assert.equal(createCallCount, 0);
+  assert.equal(preparedStatements.length, 0);
+
+  const retryTokens = [];
+  orderResponse = await handleOrderPost(createOrderRequest(orderPostPayload), {
+    verifyTurnstile: async ({ token }) => {
+      retryTokens.push(token);
+      return false;
+    },
+    createOrder: createPersistedOrder,
+  });
+  assert.equal(orderResponse.status, 400);
+  orderResponse = await handleOrderPost(
+    createOrderRequest({
+      ...orderPostPayload,
+      turnstileToken: "fresh-token",
+    }),
+    {
+      verifyTurnstile: async ({ token }) => {
+        retryTokens.push(token);
+        return token === "fresh-token";
+      },
+      createOrder: createPersistedOrder,
+    },
+  );
+  assert.equal(orderResponse.status, 201);
+  assert.deepEqual(retryTokens, ["first-token", "fresh-token"]);
+  assert.equal(createCallCount, 1);
+  assert.equal(preparedStatements.length, 2);
+  assert.equal(orderPostPayload.customerName, "Cliente Turnstile");
+  assert.equal(orderPostPayload.items.length, 1);
+
+  preparedStatements.length = 0;
   const persistedPotOrder = await createOrder(
     fakeDatabase,
     validatedPotOrders800g[0],
@@ -454,6 +694,14 @@ try {
     path.join(projectRoot, "src/components/cart/cart-drawer.tsx"),
     "utf8",
   );
+  const orderReviewSource = readFileSync(
+    path.join(projectRoot, "src/components/checkout/order-review.tsx"),
+    "utf8",
+  );
+  const turnstileWidgetSource = readFileSync(
+    path.join(projectRoot, "src/components/checkout/turnstile-widget.tsx"),
+    "utf8",
+  );
   const whatsappLink = orderSuccessSource.match(
     /<a[\s\S]*?Enviar pedido pelo WhatsApp[\s\S]*?<\/a>/,
   );
@@ -466,6 +714,18 @@ try {
   assert.match(
     cartDrawerSource,
     /activeStep === "success" && createdOrder/,
+  );
+  assert.match(orderReviewSource, /turnstileToken,/);
+  assert.match(
+    orderReviewSource,
+    /disabled=\{isSubmitting \|\| !turnstileToken\}/,
+  );
+  assert.match(orderReviewSource, /resetTurnstile\(\)/);
+  assert.doesNotMatch(orderReviewSource, /clearCart|resetCheckout/);
+  assert.match(turnstileWidgetSource, /window\.turnstile\.reset\(widgetId\)/);
+  assert.match(
+    turnstileWidgetSource,
+    /api\.js\?render=explicit/,
   );
 
   const multipleProducts = validate({

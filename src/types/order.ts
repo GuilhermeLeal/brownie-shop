@@ -14,6 +14,7 @@ export type CreateOrderInput = {
   customerPhone: string;
   requestedDate: string;
   fulfillmentType: FulfillmentMethod;
+  turnstileToken: string;
   notes?: string;
   items: CreateOrderItemInput[];
 };
